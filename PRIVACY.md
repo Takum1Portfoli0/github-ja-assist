@@ -25,6 +25,7 @@ The small Japanese labels, the concept tooltips and the page guide come only fro
 - On first use, Chrome itself may download a translation model (language pack) from Google's servers. That is the browser fetching a model; it contains no page content.
 - Translations are shown on the page temporarily and are never stored. They disappear when you navigate or reload.
 - In browsers without the Translator API, the button is shown as unsupported and nothing is sent.
+- To label the button, the page asks the browser whether en→ja translation is available (`Translator.availability()`). No page content is passed.
 
 ### Settings stay in your browser
 

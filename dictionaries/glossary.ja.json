@@ -240,7 +240,6 @@
       "description": "ファイルの各行が、どのCommitで・誰によって最後に変更されたかを表示します。"
     },
     "History": {
-      "ja": "変更履歴",
       "description": "このファイルやフォルダに関係するCommitの一覧です。"
     },
     "Raw": {
@@ -249,8 +248,11 @@
     },
     "Workflows": {
       "ja": "自動処理の定義",
-      "description": "Actionsで実行される処理の定義です。.github/workflows/ にあるYAMLファイル1つが1つのWorkflowです。",
-      "aliases": ["All workflows"]
+      "description": "Actionsで実行される処理の定義です。.github/workflows/ にあるYAMLファイル1つが1つのWorkflowです。"
+    },
+    "All workflows": {
+      "ja": "すべての自動処理",
+      "description": "このRepositoryのすべてのWorkflow（Actionsで実行される処理の定義）の実行履歴です。"
     },
     "Jobs": {
       "ja": "処理の単位",
@@ -299,10 +301,6 @@
     "Collaborators": {
       "ja": "共同作業者",
       "description": "このRepositoryへの書き込みなどの権限を与えた人です。"
-    },
-    "Pages": {
-      "ja": "Webサイト公開",
-      "description": "Repositoryのファイルから静的なWebサイトを公開する機能（GitHub Pages）です。"
     },
     "Gist": {
       "ja": "コード片の共有",

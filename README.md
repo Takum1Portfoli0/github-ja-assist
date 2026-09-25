@@ -9,7 +9,7 @@ A Chrome extension that makes GitHub.com easier for Japanese speakers **without 
 ## Features
 
 - **Learning mode (default)**: `Pull requests` stays in English and gets a small "変更の取り込み依頼" under it. The Japanese is drawn with CSS `::after` and empty alt text, so GitHub's text, `aria-label`s and accessible names are unchanged, and no nodes are inserted into React-managed DOM.
-- **Japanese-first mode**: the upstream behaviour (text replaced with Japanese), with the English term kept as a small label.
+- **Japanese-first mode**: the upstream behaviour (text replaced with Japanese), with the English term kept as a small label (up to 40 characters; longer English, such as descriptions, appears in the tooltip).
 - **English-only mode**: GitHub unchanged; the page guide and body translation button remain available.
 - **Concept tooltips** on hover or keyboard focus, e.g. what a Fork, a Pull request or Actions actually is.
 - **Page guide**: a small panel naming the current page (Issues, Actions, Settings, …) with a one-line explanation.
@@ -42,7 +42,10 @@ No data collection, no telemetry, no network calls. Only the `storage` permissio
 - Automated tests run logged out on public pages. Logged-in-only screens (e.g. repository Settings) are covered by the fixture page only.
 - **Actual on-device translation was not observed in this environment**: Chrome for Testing is not served translation models, and Edge 148 reports en→ja as unavailable. The DOM insertion is tested with a fake translator; cancel and unsupported paths are tested in real browsers. A manual check in branded Chrome 138+ is still owed.
 - Translation is English→Japanese only; links are not clickable inside translations.
-- Tooltips are visual aids and are not announced by screen readers.
+- Inline labels are limited to 16 characters of Japanese (40 of English in Japanese-first mode). Longer ones, and header items that cannot stack a label underneath, show it in the tooltip only, so buttons and the header keep their width.
+- To label the button as available or unsupported, the page asks the browser whether en→ja translation is available (`Translator.availability()`; no content is passed). The translator is created, and text translated, only on click.
+- Tooltips are visual aids and are not announced by screen readers. They stay open while hovered and close with Esc.
+- Closing the page guide returns keyboard focus to the page as a whole.
 - On narrow screens the page guide can overlap bottom content; close it or turn it off.
 
 ## Development

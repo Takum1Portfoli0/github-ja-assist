@@ -108,7 +108,6 @@
       max-width: min(340px, calc(100vw - 16px));
       padding: 8px 10px;
       border-radius: 6px;
-      pointer-events: none;
     }
     .tip p { margin: 4px 0 0; }
     .muted { color: var(--fgColor-muted, #59636e); }
@@ -177,10 +176,12 @@
 
   // ---- ツールチップ ----
   let tipTimer = 0;
+  let hideTimer = 0;
   let tipTarget = null;
 
   function hideTip() {
     clearTimeout(tipTimer);
+    clearTimeout(hideTimer);
     tipTarget = null;
     tip.hidden = true;
   }
@@ -241,7 +242,23 @@
   }
 
   document.addEventListener('mouseover', (event) => {
+    // ポインタをツールチップの上へ移しても閉じない（WCAG 1.4.13）。Shadow DOM 内の
+    // イベントは host 要素から来たものとして届く
+    if (event.target === host) {
+      clearTimeout(hideTimer);
+      return;
+    }
     const target = event.target instanceof Element ? event.target.closest('[data-ghja-src]') : null;
+    if (target && target === tipTarget) {
+      clearTimeout(hideTimer);
+      return;
+    }
+    if (!target && !tip.hidden) {
+      // 用語からツールチップへ移る途中の隙間で閉じてしまわないよう、少し待ってから閉じる
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(hideTip, 300);
+      return;
+    }
     scheduleTip(target);
   }, { passive: true });
 
@@ -301,7 +318,8 @@
       const ja = document.createElement('span');
       ja.className = 'ja muted';
       ja.textContent = page.ja;
-      guideButton.append(title, ja);
+      // 間に空白を入れる（読み上げが "Codeコード" と続けて読まないように）
+      guideButton.append(title, ' ', ja);
       guideButton.setAttribute('aria-expanded', String(expanded));
       desc.textContent = page.description;
       desc.hidden = !expanded;
@@ -375,10 +393,11 @@
     running = controller;
     let stall = setTimeout(() => controller.abort(), MODEL_STALL_MS);
     scheduleRender();
+    let translator = null;
     try {
       setStatus('翻訳モデルを準備しています…');
       // create() はクリック直後（ユーザー操作の有効期間内）に呼ぶ。初回はモデルのダウンロードを伴う
-      const translator = await Translator.create({
+      translator = await Translator.create({
         sourceLanguage: 'en',
         targetLanguage: 'ja',
         signal: controller.signal,
@@ -395,13 +414,14 @@
         signal: controller.signal,
         onProgress: (done, total) => setStatus(`翻訳しています… ${done} / ${total}`)
       });
-      translator.destroy?.();
       setStatus(controller.signal.aborted ? '翻訳を中止しました。' : `${count} 段落を翻訳しました（端末内で処理）。`);
     } catch (e) {
       setStatus(controller.signal.aborted
         ? '翻訳を中止しました（翻訳モデルの準備が進まない場合は、Chrome を最新版にしてから再度お試しください）。'
         : `翻訳できませんでした: ${e.message}`);
     } finally {
+      // 中止・失敗のときも翻訳器を解放する
+      translator?.destroy?.();
       clearTimeout(stall);
       running = null;
       scheduleRender();

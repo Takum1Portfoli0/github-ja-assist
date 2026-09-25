@@ -20,6 +20,7 @@
 <header role="banner" id="global-header">
   <nav aria-label="Global">
     <a href="/notifications">Notifications</a>
+    <button type="button" id="header-flex" style="display: flex; gap: 4px">Explore<span aria-hidden="true">▾</span></button>
     <button type="button" id="search-button" aria-label="Search or jump to…">Type <kbd>/</kbd> to search</button>
   </nav>
 </header>
@@ -30,7 +31,16 @@
     <li><button type="button" id="watch-button"><span id="watch-label">Watch</span></button></li>
     <li><button type="button" id="star-button" aria-label="Star this repository (12)"><span>Star</span></button></li>
     <li><button type="button" id="menu-button" class="uses-after"><span class="uses-after" id="uses-after-label">Settings</span></button></li>
+    <li><button type="button" id="long-label"><span>Merge pull request</span></button></li>
   </ul>
+
+  <!-- GitHub がテキストノードを差し替え・包み直し・削除する場合と、1要素に辞書の語が2つある場合 -->
+  <nav aria-label="Dynamic checks" id="dynamic-checks">
+    <button type="button" id="stale-replace"><span>Watch</span></button>
+    <button type="button" id="stale-wrap"><span>Star</span></button>
+    <button type="button" id="stale-remove">Fork <span class="Counter">1</span></button>
+    <button type="button" id="two-terms">Code<!-- -->Issues</button>
+  </nav>
 
   <nav aria-label="Repository" id="repo-nav">
     <a href="/octo/demo" aria-current="page"><span data-content="Code">Code</span></a>
@@ -43,6 +53,7 @@
     <a href="/octo/demo/settings"><span data-content="Settings">Settings</span></a>
   </nav>
 
+  <nav aria-label="Pull request navigation" id="pr-nav"><div><a href="/octo/demo/pull/2/checks">Checks <span class="Counter">2</span></a></div></nav>
   <nav aria-label="Pull request tabs" id="pr-tabs">
     <a href="/octo/demo/pull/2">Conversation <span class="Counter">4</span></a>
     <a href="/octo/demo/pull/2/files">Files changed <span class="Counter">3</span></a>
@@ -88,7 +99,8 @@ Issues</code></pre>
 <script>
   // GitHubのキーボードショートカットの代わり。拡張がEscapeなどを横取りしないか確かめる
   window.__keys = [];
-  document.addEventListener('keydown', (event) => window.__keys.push(event.key));
+  // window のバブリングで受ける。拡張（document に登録）が伝播を止めたら、ここには届かない
+  window.addEventListener('keydown', (event) => window.__keys.push(event.key));
 </script>
 </body>
 </html>

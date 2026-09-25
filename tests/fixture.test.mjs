@@ -106,6 +106,7 @@ describe('learning mode (default)', () => {
 
   test('annotates the fixed Pull request tabs, but not a PR title with the same words', async () => {
     assert.deepEqual(await page.$$eval('#pr-tabs [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Conversation', 'Files changed']);
+    assert.deepEqual(await page.$$eval('#pr-nav [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Checks']);
     assert.equal(await page.$eval('#pr-title-link', (el) => el.hasAttribute('data-ghja-src')), false);
   });
 
@@ -126,6 +127,11 @@ describe('learning mode (default)', () => {
     const snap = await snapshot(page);
     assert.equal(snap.afterContent, baseline.afterContent);
     assert.equal(await page.$eval('#uses-after-label', (el) => el.hasAttribute('data-ghja')), false);
+  });
+
+  test('header items that cannot stack the label get the tooltip only (keeps the header within the viewport)', async () => {
+    assert.equal(await page.$eval('#header-flex', (el) => el.getAttribute('data-ghja-src')), 'Explore');
+    assert.equal(await page.$eval('#header-flex', (el) => el.hasAttribute('data-ghja')), false);
   });
 
   test('never touches user content, code, diff, dialogs or the search button', async () => {
@@ -167,6 +173,9 @@ describe('Japanese-first mode', () => {
     const texts = await navTexts(page);
     assert.equal(texts[2], glossary.terms['Pull requests'].ja);
     assert.equal(await page.$eval('#repo-nav span[data-content="Pull requests"]', (el) => el.getAttribute('data-ghja')), 'Pull requests');
+    // 16文字を超える英語ラベルも添える（"Security and quality" のようなタブ名を落とさない）
+    assert.equal(await page.$eval('#long-label span', (el) => el.textContent), glossary.terms['Merge pull request'].ja);
+    assert.equal(await page.$eval('#long-label span', (el) => el.getAttribute('data-ghja')), 'Merge pull request');
   });
 
   test('user content, code and diff stay byte-for-byte identical even in the replacing mode', async () => {
@@ -229,6 +238,43 @@ describe('dynamic DOM and SPA navigation', () => {
     await page.evaluate(() => { document.querySelector('#watch-label').firstChild.nodeValue = 'octo/some-user-thing'; });
     await page.waitForFunction(() => !document.querySelector('#watch-label').hasAttribute('data-ghja-src'));
     assert.equal(await page.$eval('#watch-label', (el) => el.hasAttribute('data-ghja')), false);
+  });
+
+  test('drops a label when GitHub replaces, wraps or removes its text node', async () => {
+    await page.waitForFunction(() => ['#stale-replace span', '#stale-wrap span', '#stale-remove'].every((s) => document.querySelector(s).hasAttribute('data-ghja')));
+    await page.evaluate(() => {
+      document.querySelector('#stale-replace span').replaceChildren(document.createTextNode('octo/some-user-thing'));
+      const inner = document.createElement('span');
+      inner.id = 'stale-wrap-inner';
+      inner.textContent = 'Unwatch';
+      document.querySelector('#stale-wrap span').replaceChildren(inner);
+      document.querySelector('#stale-remove').firstChild.remove();
+    });
+    await page.waitForFunction(() => document.querySelector('#stale-wrap-inner')?.hasAttribute('data-ghja-src'));
+    const state = await page.evaluate(() => ({
+      replaced: document.querySelector('#stale-replace span').hasAttribute('data-ghja-src'),
+      wrappedOuter: document.querySelector('#stale-wrap > span').hasAttribute('data-ghja-src'),
+      wrappedInner: document.querySelector('#stale-wrap-inner').getAttribute('data-ghja-src'),
+      removed: document.querySelector('#stale-remove').hasAttribute('data-ghja-src')
+    }));
+    assert.deepEqual(state, { replaced: false, wrappedOuter: false, wrappedInner: 'Unwatch', removed: false });
+  });
+
+  test('an element holding two dictionary words keeps one stable label', async () => {
+    const result = await page.evaluate(async () => {
+      const el = document.querySelector('#two-terms');
+      let writes = 0;
+      const observer = new MutationObserver((records) => { writes += records.length; });
+      observer.observe(el, { attributes: true, attributeFilter: ['data-ghja-src', 'data-ghja', 'data-ghja-tip'] });
+      for (let i = 0; i < 5; i++) {
+        // 同じ値の再代入でも characterData の変化になり、この要素が再走査される
+        el.lastChild.nodeValue = 'Issues';
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }
+      observer.disconnect();
+      return { writes, src: el.getAttribute('data-ghja-src') };
+    });
+    assert.deepEqual(result, { writes: 0, src: 'Code' });
   });
 
   test('survives a Turbo-style <body> replacement and a pushState navigation', async () => {
@@ -302,8 +348,15 @@ describe('concept tooltips', () => {
     assert.equal(await tip().isVisible(), true);
     assert.match(await tip().textContent(), /Pull requests/);
     assert.match(await tip().textContent(), /Branch/);
-    await page.mouse.move(5, 600);
-    await page.waitForTimeout(100);
+    // ツールチップの上へポインタを移しても閉じない（WCAG 1.4.13）
+    const box = await tip().boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 5 });
+    await page.waitForTimeout(500);
+    assert.equal(await tip().isVisible(), true);
+    // 右端には注釈の付いた要素が無い（固定UIのリンクやボタンはすべて左寄せ）
+    assert.equal(await page.evaluate(() => Boolean(document.elementFromPoint(1270, 5)?.closest('[data-ghja-src], ghja-assist'))), false);
+    await page.mouse.move(1270, 5);
+    await page.waitForTimeout(500);
     assert.equal(await tip().isVisible(), false);
   });
 
@@ -358,7 +411,7 @@ describe('page guide', () => {
     test(`${pathname} → ${key}`, async () => {
       const page = await open(browser.context, pathname);
       const text = await page.locator('ghja-assist .guide').textContent();
-      assert.equal(text, glossary.pages[key].title + glossary.pages[key].ja);
+      assert.equal(text, `${glossary.pages[key].title} ${glossary.pages[key].ja}`);
       await page.close();
     });
   }
@@ -427,7 +480,9 @@ describe('README / Issue / PR body translation', () => {
     assert.equal(result.restored, true);
   });
 
-  test('the in-page button uses the built-in Translator only on click, and can be cancelled', async () => {
+  // 「クリックしたときだけ」はここでは示せない（CfT にはモデルが無いので自動翻訳しても何も起きない）。
+  // それは source hygiene の静的検査で確かめる。ここで示すのはクリック後の準備と中止
+  test('clicking the button starts model preparation and can be cancelled', async () => {
     const button = page.locator('ghja-assist button', { hasText: /本文/ });
     assert.equal(await button.textContent(), '本文を日本語で読む');
     await button.click();
@@ -523,10 +578,27 @@ describe('source hygiene', () => {
     assert.deepEqual(manifest.content_scripts[0].matches, ['https://github.com/*']);
   });
 
+  test('the translator is created and bodies are translated only inside the button click handler', () => {
+    const source = read('assist.js');
+    const start = source.indexOf("translateButton.addEventListener('click'");
+    const end = source.indexOf('// ---- SPA遷移', start);
+    assert.ok(start > 0 && end > start, 'click handler found');
+    for (const call of [/Translator\.create\(/g, /translateBodies\(/g]) {
+      const positions = [...source.matchAll(call)].map((m) => m.index);
+      assert.ok(positions.length > 0, `${call} is used`);
+      assert.ok(positions.every((p) => p > start && p < end), `${call} appears only inside the click handler`);
+    }
+    for (const file of ['content.js', 'shared.js', 'popup.js', 'options.js', 'content-translate.js']) {
+      assert.doesNotMatch(read(file), /Translator\.create\(/, file);
+    }
+    // content-translate.js は translateBodies を定義するだけで、自分では呼ばない
+    assert.equal([...read('content-translate.js').matchAll(/translateBodies\(/g)].length, 1);
+  });
+
   test('no HTML injection APIs and no network calls except bundled files', () => {
     for (const file of ['content.js', 'content-translate.js', 'assist.js', 'shared.js', 'popup.js', 'options.js']) {
       const source = read(file);
-      assert.doesNotMatch(source, /\.innerHTML\s*=|outerHTML\s*=|insertAdjacentHTML|document\.write|\beval\(|new Function/, file);
+      assert.doesNotMatch(source, /\.innerHTML\s*\+?=|outerHTML\s*\+?=|insertAdjacentHTML|setHTMLUnsafe|createContextualFragment|parseFromString|document\.write|\beval\(|new Function/, file);
       assert.doesNotMatch(source, /XMLHttpRequest|WebSocket|sendBeacon|EventSource/, file);
       for (const match of source.matchAll(/fetch\(([^)]*)\)/g)) {
         assert.match(match[1], /chrome\.runtime\.getURL|^url$/, `${file}: ${match[0]}`);

@@ -23,11 +23,17 @@
   let glossaryTerms = Object.create(null);
   // これより長い訳は英語の横に出さず、ツールチップでだけ見せる（ボタンやタブの幅を守る）
   const MAX_INLINE_LABEL = 16;
+  // 日本語優先モードで添える英語の上限。"Security and quality" や "Compare & pull request" の
+  // ようなラベルは出し、説明文のような長い英語（辞書の約1/3）はツールチップでだけ見せる
+  const MAX_INLINE_SOURCE = 40;
   const annotationQueue = [];
   // 注釈を付けた要素 → その注釈の元になったテキストノード
   const annotationOwner = new WeakMap();
-  // GitHub側がすでに ::after を使っている要素。上書きすると見た目を壊すので注釈しない
-  const pseudoBlocked = new WeakSet();
+  // 横に小さな文字を出さない（ツールチップだけにする）要素:
+  // - GitHub側がすでに ::after を使っている要素（上書きすると見た目を壊す）
+  // - ヘッダー内の flex/grid 要素。::after が横並びの項目になり英語の下に重ねられず、
+  //   ヘッダーが画面幅からはみ出す（1280px の日本語優先モードで 28px はみ出した）
+  const inlineBlocked = new WeakSet();
   // 固定の項目しか並ばないタブ列（isUserContentLink を参照）
   const FIXED_TAB_NAV = 'nav[aria-label="Repository"], nav[aria-label="Pull request tabs"], nav[aria-label="Pull request navigation"]';
 
@@ -673,8 +679,16 @@
   function queueAnnotation(textNode, src, shown, displayed) {
     const el = textNode.parentElement;
     if (!el) return;
-    const inline = shown !== displayed && shown.length <= MAX_INLINE_LABEL ? shown : null;
+    const limit = displayMode === 'ja' ? MAX_INLINE_SOURCE : MAX_INLINE_LABEL;
+    const inline = shown !== displayed && shown.length <= limit ? shown : null;
     annotationQueue.push({ el, textNode, src, inline, tip: Boolean(glossaryTerms[src]?.description) });
+  }
+
+  function removeAnnotation(el) {
+    el.removeAttribute('data-ghja-src');
+    el.removeAttribute('data-ghja');
+    el.removeAttribute('data-ghja-tip');
+    annotationOwner.delete(el);
   }
 
   // 翻訳できなかったテキストノードが、以前に注釈を付けたものなら注釈を外す
@@ -685,20 +699,32 @@
     if (!el || annotationOwner.get(el) !== textNode) return;
     const src = el.getAttribute('data-ghja-src');
     if (!src || text === src || text === lookup(dict, src)) return;
-    el.removeAttribute('data-ghja-src');
-    el.removeAttribute('data-ghja');
-    el.removeAttribute('data-ghja-tip');
-    annotationOwner.delete(el);
+    removeAnnotation(el);
+  }
+
+  // 注釈の元になったテキストノードが要素から取り除かれた（置き換え・要素で包み直し・削除）
+  // 場合は注釈を外す。残すと、新しく入ったユーザーの文字などの横に古い日本語が出続ける。
+  // 新しい中身に辞書の語があれば、通常の再走査で付け直される
+  function dropOrphanedAnnotation(el) {
+    const owner = annotationOwner.get(el);
+    if (owner && owner.parentNode !== el) removeAnnotation(el);
   }
 
   // 読み取り（getComputedStyle）を先にまとめ、書き込みを後にまとめる。
   // 交互に行うと要素の数だけスタイル再計算が走る。属性は値が変わるときだけ書く
   function flushAnnotations() {
-    const items = annotationQueue.splice(0);
+    // 1つの要素に辞書の語のテキストノードが2つあるときは、先に出てくる方だけを使う
+    // （後勝ちにすると、再走査のたびに2つの語の間で属性が書き換わり続ける）
+    const firstPerElement = new Map();
+    for (const item of annotationQueue.splice(0)) {
+      if (!firstPerElement.has(item.el)) firstPerElement.set(item.el, item);
+    }
+    const items = [...firstPerElement.values()];
     for (const { el } of items) {
-      if (el.hasAttribute('data-ghja-src') || pseudoBlocked.has(el)) continue;
+      if (el.hasAttribute('data-ghja-src') || inlineBlocked.has(el)) continue;
       const content = getComputedStyle(el, '::after').content;
-      if (content && content !== 'none' && content !== 'normal') pseudoBlocked.add(el);
+      if (content && content !== 'none' && content !== 'normal') inlineBlocked.add(el);
+      else if (el.closest('header') && /flex|grid/.test(getComputedStyle(el).display)) inlineBlocked.add(el);
     }
     const setAttr = (el, name, value) => {
       if (value === null) {
@@ -710,7 +736,7 @@
     for (const { el, textNode, src, inline, tip } of items) {
       annotationOwner.set(el, textNode);
       setAttr(el, 'data-ghja-src', src);
-      setAttr(el, 'data-ghja', pseudoBlocked.has(el) ? null : inline);
+      setAttr(el, 'data-ghja', inlineBlocked.has(el) ? null : inline);
       setAttr(el, 'data-ghja-tip', tip ? '' : null);
     }
   }
@@ -920,6 +946,9 @@
         if (mutation.type === 'characterData') {
           addPendingRoot(mutation.target);
           continue;
+        }
+        if (mutation.removedNodes.length > 0 && mutation.target instanceof Element) {
+          dropOrphanedAnnotation(mutation.target);
         }
         mutation.addedNodes.forEach((node) => {
           watchPendingPartials(node);

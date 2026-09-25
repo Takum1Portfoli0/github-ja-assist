@@ -249,12 +249,13 @@ describe('themes, zoom and narrow screens', () => {
 
   // 200%ズーム相当（1280px幅の画面を2倍に拡大）とスマートフォン幅
   for (const [label, viewport] of [['200% zoom', { width: 640, height: 450 }], ['narrow 390px', { width: 390, height: 844 }], ['desktop 1280px', { width: 1280, height: 900 }]]) {
-    test(`${label}: no horizontal overflow and no repository tab pushed out`, async () => {
-      const measure = async (extension) => {
-        const browser = await launch({ extension, viewport });
+    test(`${label}: no horizontal overflow and no repository tab pushed out (learn and ja modes)`, async () => {
+      const measure = async (mode) => {
+        const browser = await launch({ extension: Boolean(mode), viewport });
         try {
+          if (mode) await setSettings(browser.context, browser.extensionId, { mode });
           const page = await visit(browser.context, REPO);
-          if (extension) await page.screenshot({ path: path.join(OUT, `repository-root-${label.replace(/\W+/g, '-')}.png`) });
+          if (mode) await page.screenshot({ path: path.join(OUT, `repository-root-${mode}-${label.replace(/\W+/g, '-')}.png`) });
           return await page.evaluate(() => ({
             overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
             tabs: [...document.querySelectorAll('nav[aria-label="Repository"] a')].filter((a) => {
@@ -266,11 +267,13 @@ describe('themes, zoom and narrow screens', () => {
           await browser.context.close();
         }
       };
-      const base = await measure(false);
-      const ext = await measure(true);
-      console.log(`${label}: baseline ${JSON.stringify(base)}, with extension ${JSON.stringify(ext)}`);
-      assert.ok(ext.overflow <= Math.max(base.overflow, 0), 'no new horizontal scroll');
-      assert.ok(ext.tabs >= base.tabs, `visible repository tabs ${ext.tabs} vs ${base.tabs}`);
+      const base = await measure(null);
+      for (const mode of ['learn', 'ja']) {
+        const ext = await measure(mode);
+        console.log(`${label}: baseline ${JSON.stringify(base)}, ${mode} ${JSON.stringify(ext)}`);
+        assert.ok(ext.overflow <= Math.max(base.overflow, 0), `${mode}: no new horizontal scroll`);
+        assert.ok(ext.tabs >= base.tabs, `${mode}: visible repository tabs ${ext.tabs} vs ${base.tabs}`);
+      }
     });
   }
 });
