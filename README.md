@@ -20,7 +20,7 @@ A Chrome extension that makes GitHub.com easier for Japanese speakers **without 
 
 ## Install (unpacked)
 
-1. Unzip `github-ja-assist-v0.3.0.zip`, or build it (below).
+1. Download `github-ja-assist-v0.3.0.zip` from this repository's [Releases](../../releases/latest) and unzip it, or build it (below).
 2. Open `chrome://extensions`, enable **Developer mode**.
 3. **Load unpacked** → select the folder containing `manifest.json`.
 4. Reload any open GitHub tab.

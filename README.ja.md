@@ -25,7 +25,7 @@ GitHub の英語の画面を、**英語の用語はそのまま残して**、小
 
 開発版なので Chrome ウェブストアには公開していません。次の手順で読み込みます。
 
-1. 配布された `github-ja-assist-v0.3.0.zip` を展開します（または下の「開発者向け」の手順で `dist/github-ja-assist` を作ります）。
+1. このリポジトリの [Releases](../../releases/latest) から `github-ja-assist-v0.3.0.zip` をダウンロードして展開します（または下の「開発者向け」の手順で `dist/github-ja-assist` を作ります）。
 2. Chrome のアドレスバーに `chrome://extensions` と入力して開きます。
 3. 右上の **デベロッパーモード** を ON にします。
 4. **パッケージ化されていない拡張機能を読み込む** を押し、展開したフォルダ（`manifest.json` が入っているフォルダ）を選びます。
