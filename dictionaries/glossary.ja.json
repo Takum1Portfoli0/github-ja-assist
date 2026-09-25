@@ -1,0 +1,368 @@
+{
+  "language": "ja",
+  "note": "GitHub/Git用語の学習用グロッサリー。terms のキーは画面上の英語表記と完全一致で照合する。ja は学習モードで英語の横に出す短い日本語（逐語訳より操作の意味を優先）。ja を省略した項目は dictionaries/ja.json の訳を使う。description はツールチップに出す概念の説明。aliases は同じ ja と description を共有する別表記。pages はページガイドの文言で、どのURLがどのページかは assist.js が決める。",
+  "terms": {
+    "Code": {
+      "ja": "コード",
+      "description": "このRepositoryに入っているファイルとフォルダ（ソースコード）です。緑の「Code」ボタンからは、Clone（PCへ複製）やZIPダウンロードの方法を選べます。"
+    },
+    "Issues": {
+      "ja": "課題・要望",
+      "description": "バグ報告・機能の要望・作業項目などを1件ずつ記録し、話し合うための機能です。Issue自体はコードの変更を含みません。",
+      "aliases": ["Issue"]
+    },
+    "Pull requests": {
+      "ja": "変更の取り込み依頼",
+      "description": "あるBranchで行った変更を、別のBranch（Fork元のRepositoryを含む）へ取り込んでもらうための依頼です。差分の確認・レビュー・議論を経てMergeされます。",
+      "aliases": ["Pull request"]
+    },
+    "Discussions": {
+      "ja": "議論・Q&A",
+      "description": "質問・アイデア・お知らせなど、特定の作業に結びつかない話題をスレッド形式で話し合う場所です。"
+    },
+    "Actions": {
+      "ja": "自動処理",
+      "description": "テスト・ビルド・デプロイなどを、pushやPull requestなどの出来事をきっかけに自動実行する機能（GitHub Actions）です。手順はWorkflowファイル（YAML）に書きます。"
+    },
+    "Projects": {
+      "ja": "作業管理",
+      "description": "IssueやPull requestをボードや表に並べ、進み具合を管理する機能です。"
+    },
+    "Wiki": {
+      "ja": "資料ページ",
+      "description": "Repositoryに付属する説明ページ集です。コード本体とは別のGitリポジトリとして保存されます。"
+    },
+    "Security": {
+      "ja": "セキュリティ",
+      "description": "脆弱性の報告窓口（Security policy）や、依存パッケージ・コードの脆弱性警告を確認する場所です。"
+    },
+    "Security and quality": {
+      "ja": "セキュリティと品質",
+      "description": "脆弱性の報告窓口（Security policy）や、依存パッケージ・コードの脆弱性警告、コード品質の指摘を確認する場所です。"
+    },
+    "Insights": {
+      "ja": "分析",
+      "description": "Commit数・貢献者・アクセス数など、このRepositoryの活動状況をグラフで確認する場所です。"
+    },
+    "Settings": {
+      "ja": "設定",
+      "description": "名前・公開範囲・権限・Branchの保護ルールなどを変更する場所です。Repositoryの設定は管理権限のある人だけに表示されます。"
+    },
+    "Agents": {
+      "ja": "AIエージェント",
+      "description": "Copilotなどのコーディングエージェントに任せた作業の一覧と、その進み具合を確認する場所です。"
+    },
+    "Fork": {
+      "ja": "自分側へ複製",
+      "description": "このRepositoryを自分のアカウント（またはOrganization）の下に複製します。元のプロジェクトとは別に自由に変更でき、Pull requestで元へ変更を提案できます。"
+    },
+    "Star": {
+      "ja": "お気に入り",
+      "description": "このRepositoryをブックマークし、関心や評価を示します。Star数は人気の目安として表示されます。Starしても通知は増えません。"
+    },
+    "Watch": {
+      "ja": "更新を通知",
+      "description": "このRepositoryの更新（Issue・Pull request・Releaseなど）を通知で受け取るかどうかを設定します。"
+    },
+    "Sponsor": {
+      "ja": "開発者を支援",
+      "description": "GitHub Sponsorsを通じて、このプロジェクトの開発者を金銭的に支援します。"
+    },
+    "Clone": {
+      "ja": "PCへ複製",
+      "description": "Repositoryを全履歴ごと自分のPCへコピーし、手元で作業できるようにします（git clone）。GitHub上には何も作られません。"
+    },
+    "Download ZIP": {
+      "ja": "ZIPで取得",
+      "description": "現在のBranchのファイルをZIPでダウンロードします。Gitの履歴は含まれません。"
+    },
+    "Codespaces": {
+      "ja": "クラウド開発環境",
+      "description": "ブラウザやVS Codeから使える、このRepository用のクラウド上の開発環境です。"
+    },
+    "Go to file": {
+      "ja": "ファイルを探す",
+      "description": "ファイル名で検索して開きます。"
+    },
+    "Add file": {
+      "ja": "ファイルを追加",
+      "description": "ブラウザ上でファイルを新しく作るかアップロードし、Commitします。"
+    },
+    "Branches": {
+      "ja": "作業の分岐",
+      "description": "履歴から枝分かれした作業の流れです。ほかの作業に影響を与えずに変更を進め、あとでMergeして統合します。",
+      "aliases": ["Branch"]
+    },
+    "Tags": {
+      "ja": "版の目印",
+      "description": "特定のCommitに付ける名前付きの目印です。主にバージョン番号（v1.0.0 など）に使います。",
+      "aliases": ["Tag"]
+    },
+    "Releases": {
+      "ja": "公開版",
+      "description": "Tagに説明文や配布ファイルを添えて公開した、ソフトウェアの配布版です。",
+      "aliases": ["Release"]
+    },
+    "Packages": {
+      "ja": "パッケージ",
+      "description": "GitHub Packagesで公開された、npm・Dockerイメージなどのパッケージです。"
+    },
+    "Commits": {
+      "ja": "変更履歴",
+      "description": "Commitの一覧です。Commitは、ある時点のファイルの変更を説明文付きで履歴に記録したものです。"
+    },
+    "Commit": {
+      "ja": "変更を記録",
+      "description": "現在の変更内容を、説明文（Commit message）付きで履歴に記録します。",
+      "aliases": ["Commit changes", "Commit changes..."]
+    },
+    "Contributors": {
+      "ja": "貢献者",
+      "description": "このRepositoryにCommitが取り込まれた人の一覧です。"
+    },
+    "Deployments": {
+      "ja": "デプロイ履歴",
+      "description": "本番・検証などの環境へ配置（デプロイ）した記録です。"
+    },
+    "Environments": {
+      "ja": "デプロイ先",
+      "description": "production・stagingなど、デプロイ先ごとの設定（承認ルールやSecret）をまとめたものです。"
+    },
+    "README": {
+      "ja": "説明書",
+      "description": "Repositoryのトップに表示される説明ファイル（README.md など）です。",
+      "aliases": ["Readme"]
+    },
+    "About": {
+      "ja": "概要",
+      "description": "Repositoryの説明文・Webサイト・トピックなどの基本情報です。"
+    },
+    "Activity": {
+      "ja": "活動履歴",
+      "description": "push・Branchの作成・Mergeなど、このRepositoryで行われた操作の履歴です。"
+    },
+    "Languages": {
+      "ja": "使用言語",
+      "description": "このRepositoryのコードに含まれるプログラミング言語の割合です。"
+    },
+    "Merge": {
+      "ja": "変更を統合",
+      "description": "あるBranchの変更を、別のBranchへ取り込んで1つにまとめることです。"
+    },
+    "Merge pull request": {
+      "ja": "変更を統合",
+      "description": "Pull requestの変更を取り込み先のBranchへ統合します。統合の方法（Merge commit・Squash・Rebase）を選べます。"
+    },
+    "Squash and merge": {
+      "ja": "1つにまとめて統合",
+      "description": "Pull request内の複数のCommitを1つのCommitにまとめてから統合します。取り込み先の履歴が簡潔になります。"
+    },
+    "Rebase and merge": {
+      "ja": "付け替えて統合",
+      "description": "Pull requestの各Commitを、取り込み先Branchの最新のCommitの後ろに1つずつ付け直して統合します。Merge commitは作られません。"
+    },
+    "Create a merge commit": {
+      "ja": "統合Commitを作成",
+      "description": "2つのBranchを結ぶMerge commitを作って統合します。元のCommit履歴はそのまま残ります。"
+    },
+    "Compare & pull request": {
+      "ja": "差分を見て依頼を作成",
+      "description": "最近pushしたBranchと取り込み先の差分を表示し、Pull requestを作成する画面へ進みます。"
+    },
+    "New pull request": {
+      "ja": "取り込み依頼を作成",
+      "description": "Branch同士を比較して、新しいPull requestを作成します。"
+    },
+    "Create pull request": {
+      "ja": "取り込み依頼を作成",
+      "description": "比較している2つのBranchの差分から、Pull requestを作成します。"
+    },
+    "New issue": {
+      "ja": "課題を登録",
+      "description": "新しいIssueを作成します。"
+    },
+    "Draft": {
+      "ja": "下書き",
+      "description": "まだレビューの準備ができていないことを示す状態です。Draftの間はMergeできません。"
+    },
+    "Ready for review": {
+      "ja": "レビュー可能にする",
+      "description": "Draft状態を解除し、レビューを受けられる状態にします。"
+    },
+    "Review changes": {
+      "ja": "レビューを送信",
+      "description": "差分へのコメントをまとめ、Comment・Approve（承認）・Request changes（修正依頼）のいずれかとしてレビューを送信します。"
+    },
+    "Approve": {
+      "ja": "承認",
+      "description": "この変更を取り込んでよいと承認するレビューです。"
+    },
+    "Request changes": {
+      "ja": "修正を依頼",
+      "description": "取り込む前に修正が必要であることを示すレビューです。"
+    },
+    "Files changed": {
+      "ja": "変更ファイル",
+      "description": "このPull requestで変更されたファイルと、その差分（diff）です。緑の行が追加、赤の行が削除です。"
+    },
+    "Conversation": {
+      "ja": "やり取り",
+      "description": "Pull requestの説明・コメント・レビュー・状態の変化が時系列に並ぶ画面です。"
+    },
+    "Checks": {
+      "ja": "自動チェック",
+      "description": "ActionsなどのCIが、このPull requestのCommitに対して実行したテストなどの結果です。"
+    },
+    "Labels": {
+      "ja": "分類ラベル",
+      "description": "IssueやPull requestを分類するための色付きの目印です。",
+      "aliases": ["Label"]
+    },
+    "Milestones": {
+      "ja": "マイルストーン",
+      "description": "IssueやPull requestを、リリースなどの目標ごとにまとめて進み具合を追う機能です。",
+      "aliases": ["Milestone"]
+    },
+    "Assignees": {
+      "ja": "担当者",
+      "description": "そのIssueやPull requestを担当する人です。"
+    },
+    "Reviewers": {
+      "ja": "レビュー担当",
+      "description": "Pull requestのレビューを依頼された人やTeamです。"
+    },
+    "Sync fork": {
+      "ja": "元の変更を取り込む",
+      "description": "Fork元（upstream）のBranchに追加された変更を、自分のForkへ取り込みます。"
+    },
+    "Blame": {
+      "ja": "行ごとの変更者",
+      "description": "ファイルの各行が、どのCommitで・誰によって最後に変更されたかを表示します。"
+    },
+    "History": {
+      "ja": "変更履歴",
+      "description": "このファイルやフォルダに関係するCommitの一覧です。"
+    },
+    "Raw": {
+      "ja": "そのままの内容",
+      "description": "ファイルの中身を、装飾なしのテキストとして表示します。"
+    },
+    "Workflows": {
+      "ja": "自動処理の定義",
+      "description": "Actionsで実行される処理の定義です。.github/workflows/ にあるYAMLファイル1つが1つのWorkflowです。",
+      "aliases": ["All workflows"]
+    },
+    "Jobs": {
+      "ja": "処理の単位",
+      "description": "Workflowを構成する処理の単位です。Jobごとに別の実行環境（runner）で動きます。"
+    },
+    "Artifacts": {
+      "ja": "成果物",
+      "description": "Workflowの実行で作られ、保存されたファイル（ビルド結果やログなど）です。"
+    },
+    "Secrets and variables": {
+      "ja": "秘密情報と変数",
+      "description": "Actionsなどで使うパスワードやトークン（Secret）と、設定値（Variable）を登録する場所です。Secretの値は登録後に表示されません。"
+    },
+    "Code scanning": {
+      "ja": "コードの脆弱性検査",
+      "description": "CodeQLなどでソースコードを解析し、脆弱性やバグの可能性を検出する機能です。"
+    },
+    "Dependency graph": {
+      "ja": "依存関係",
+      "description": "このRepositoryが使っているパッケージ（依存関係）の一覧です。Dependabotによる脆弱性警告の元になります。"
+    },
+    "Pulse": {
+      "ja": "最近の活動",
+      "description": "指定した期間に作成・MergeされたPull requestやIssueなどの概要です。"
+    },
+    "Traffic": {
+      "ja": "アクセス数",
+      "description": "閲覧数やClone数などのアクセス状況です。書き込み権限のある人だけが見られます。"
+    },
+    "Network": {
+      "ja": "Branchの系譜",
+      "description": "Forkを含むBranchの分岐と統合の様子を図で表示します。"
+    },
+    "Webhooks": {
+      "ja": "外部への通知",
+      "description": "pushなどの出来事が起きたときに、指定したURLへHTTPで通知を送る設定です。"
+    },
+    "Deploy keys": {
+      "ja": "デプロイ用の鍵",
+      "description": "サーバーなどがこのRepositoryだけにアクセスするためのSSH公開鍵です。"
+    },
+    "Rulesets": {
+      "ja": "保護ルール",
+      "description": "Branchを誰がどう変更できるか（直接pushの禁止、レビュー必須など）を決めるルールです。"
+    },
+    "Collaborators": {
+      "ja": "共同作業者",
+      "description": "このRepositoryへの書き込みなどの権限を与えた人です。"
+    },
+    "Pages": {
+      "ja": "Webサイト公開",
+      "description": "Repositoryのファイルから静的なWebサイトを公開する機能（GitHub Pages）です。"
+    },
+    "Gist": {
+      "ja": "コード片の共有",
+      "description": "短いコードやメモを共有するための小さなRepositoryです。"
+    },
+    "Repository": {
+      "description": "プロジェクトのファイルと、その変更履歴（Git）をまとめて保存する場所です。"
+    },
+    "Organizations": {
+      "ja": "組織",
+      "description": "複数の人でRepositoryやTeamを共同管理するためのアカウントです。",
+      "aliases": ["Organization"]
+    },
+    "Notifications": {
+      "ja": "通知",
+      "description": "Watch中のRepositoryや、自分が関わるIssue・Pull requestの更新が届く場所です。"
+    },
+    "Merged": {
+      "ja": "統合済み",
+      "description": "変更が取り込み先のBranchへ統合された状態です。"
+    },
+    "Public": {
+      "ja": "公開",
+      "description": "インターネット上の誰でも閲覧できる状態です。"
+    },
+    "Private": {
+      "ja": "非公開",
+      "description": "許可された人だけが閲覧できる状態です。"
+    },
+    "Archived": {
+      "ja": "アーカイブ済み",
+      "description": "読み取り専用になり、Issue・Pull request・pushを受け付けない状態です。"
+    }
+  },
+  "pages": {
+    "code": { "title": "Code", "ja": "コード", "description": "このプロジェクトのファイルを見る場所です。フォルダをたどってファイルを開けます。" },
+    "file": { "title": "File", "ja": "ファイル", "description": "ファイルの中身を表示しています。Blameで行ごとの変更者を、Historyで変更履歴を確認できます。" },
+    "commits": { "title": "Commits", "ja": "変更履歴", "description": "Commit（変更の記録）を新しい順に並べた履歴です。" },
+    "commit": { "title": "Commit", "ja": "1件の変更", "description": "1つのCommitで変わった内容（差分）を表示しています。緑の行が追加、赤の行が削除です。" },
+    "branches": { "title": "Branches", "ja": "作業の分岐", "description": "このRepositoryのBranch（作業の分岐）の一覧です。" },
+    "releases": { "title": "Releases", "ja": "公開版", "description": "配布用に公開された版（Release）と、その目印（Tag）の一覧です。" },
+    "issues": { "title": "Issues", "ja": "課題・要望", "description": "バグ、要望、作業項目などを管理します。" },
+    "issue": { "title": "Issue", "ja": "課題・要望", "description": "1件の課題について、内容とやり取りを表示しています。" },
+    "pulls": { "title": "Pull requests", "ja": "変更の取り込み依頼", "description": "コード変更の確認・レビュー・取り込みを行います。" },
+    "pull": { "title": "Pull request", "ja": "変更の取り込み依頼", "description": "1件の変更の取り込み依頼です。Conversation（やり取り）・Commits・Checks（自動チェック）・Files changed（差分）のタブで確認します。" },
+    "compare": { "title": "Compare", "ja": "差分の比較", "description": "2つのBranch（またはCommit）の差分を比べ、Pull requestを作成する画面です。" },
+    "actions": { "title": "Actions", "ja": "自動処理", "description": "自動テストやビルドなどの実行状況を確認します。" },
+    "projects": { "title": "Projects", "ja": "作業管理", "description": "IssueやPull requestをボードや表で管理します。" },
+    "security": { "title": "Security", "ja": "セキュリティ", "description": "脆弱性の報告窓口や、依存関係・コードの脆弱性警告を確認します。" },
+    "insights": { "title": "Insights", "ja": "分析", "description": "このRepositoryの活動状況をグラフで確認します。" },
+    "settings": { "title": "Settings", "ja": "設定", "description": "このRepositoryの設定を変更します。" },
+    "discussions": { "title": "Discussions", "ja": "議論・Q&A", "description": "質問やアイデアをスレッド形式で話し合う場所です。" },
+    "wiki": { "title": "Wiki", "ja": "資料ページ", "description": "このRepositoryの説明ページ集です。" },
+    "fork": { "title": "Fork", "ja": "自分側へ複製", "description": "このRepositoryを自分のアカウント側へ複製する画面です。" },
+    "profile": { "title": "Profile", "ja": "プロフィール", "description": "このユーザーの公開Repositoryや活動を表示しています。" },
+    "org": { "title": "Organization", "ja": "組織", "description": "複数の人でRepositoryを共同管理しているアカウントのページです。" },
+    "search": { "title": "Search", "ja": "検索結果", "description": "Repository・Code・Issueなどの検索結果です。左側で種類を絞り込めます。" },
+    "notifications": { "title": "Notifications", "ja": "通知", "description": "Watch中のRepositoryや、自分が関わるIssue・Pull requestの更新です。" },
+    "dashboard": { "title": "Home", "ja": "ホーム", "description": "自分に関係する最近の動きが表示されます。" },
+    "user-settings": { "title": "Settings", "ja": "アカウント設定", "description": "自分のアカウントの設定を変更します。" },
+    "new-repo": { "title": "New repository", "ja": "Repositoryの作成", "description": "新しいRepositoryを作成します。公開範囲（Public/Private）は後から変更できます。" }
+  }
+}

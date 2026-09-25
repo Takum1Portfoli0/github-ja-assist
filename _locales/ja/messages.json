@@ -1,27 +1,51 @@
 {
   "extensionName": {
-    "message": "GitHub UI Translator"
+    "message": "GitHub 日本語アシスト"
   },
   "extensionDescription": {
-    "message": "同梱した言語辞書を使って、GitHubのUIをブラウザ内で翻訳します。"
+    "message": "GitHubの英語の用語はそのままに、小さな日本語・用語の説明・ページガイドを添えます。本文は頼んだときだけ端末内で翻訳します。"
   },
   "actionTitle": {
-    "message": "GitHub UI Translator"
+    "message": "GitHub 日本語アシスト"
   },
   "translationLabel": {
-    "message": "翻訳"
+    "message": "日本語アシスト"
   },
   "translationToggleLabel": {
-    "message": "翻訳の有効・無効を切り替える"
+    "message": "拡張機能の有効・無効を切り替える"
   },
   "translationEnabledStatus": {
-    "message": "ON: GitHubのUIを翻訳します"
+    "message": "ON: GitHubに日本語の補助を表示します"
   },
   "translationDisabledStatus": {
-    "message": "OFF: 原文（英語）を表示します"
+    "message": "OFF: GitHubをそのまま表示します"
+  },
+  "modeLabel": {
+    "message": "表示モード"
+  },
+  "modeLearn": {
+    "message": "英語＋小さな日本語（おすすめ）"
+  },
+  "modeJapanese": {
+    "message": "日本語を主に、英語を小さく"
+  },
+  "modeOriginal": {
+    "message": "英語のみ（GitHub標準）"
+  },
+  "tooltipsLabel": {
+    "message": "用語の説明を表示（ホバー時）"
+  },
+  "pageGuideLabel": {
+    "message": "ページガイド"
+  },
+  "contentTranslationLabel": {
+    "message": "README・Issue・PRの「日本語で読む」ボタン"
+  },
+  "contentTranslationNote": {
+    "message": "本文はボタンを押したときだけ、Chrome内蔵の翻訳機能を使ってこの端末の中で翻訳します。外部のサーバーには送信しません。"
   },
   "languageLabel": {
-    "message": "言語"
+    "message": "辞書の言語"
   },
   "globalHeaderTranslationLabel": {
     "message": "グローバルヘッダーを翻訳"
@@ -33,10 +57,10 @@
     "message": "起動直後などにグローバル検索画面が開かない場合は、この設定をオフにしてください。"
   },
   "repositoryLink": {
-    "message": "GitHubでGitHub UI Translatorを見る"
+    "message": "元にした拡張: GitHub UI Translator（MIT）"
   },
   "settingsTitle": {
-    "message": "GitHub UI Translator - 設定"
+    "message": "GitHub 日本語アシスト - 設定"
   },
   "dictionaryInfoHeading": {
     "message": "辞書情報"

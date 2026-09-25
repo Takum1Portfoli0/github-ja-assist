@@ -1,0 +1,44 @@
+/* GitHub 日本語アシスト - GitHubのページに直接効くスタイル（注釈と本文の訳文だけ） */
+
+/* 英語ラベルに添える小さな日本語。content.js が data-ghja 属性を付けた要素にだけ効く。
+   "/ ''" は代替テキストを空にする指定で、スクリーンリーダーが読むアクセシブルネームを変えない。
+   inline-block にするのは、リンク下線などの装飾を注釈へ伝播させないため */
+[data-ghja]::after {
+  content: attr(data-ghja) / "";
+  display: inline-block;
+  margin-inline-start: 0.4em;
+  font-size: 0.75em;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  /* 文字色は要素自身の色を薄めて使う（緑のボタン上の白文字などでも読めるように） */
+  color: inherit;
+  opacity: 0.72;
+}
+
+/* リポジトリのタブ（UnderlineNav。英語ラベルに data-content が付く）では英語の下に重ねる。
+   横に並べるとタブ幅が伸び、右端のタブが画面外や「…」メニューに押し出される */
+[data-content][data-ghja]::after {
+  display: block;
+  margin: 1px 0 0;
+  font-size: 10px;
+  text-align: center;
+}
+
+/* 説明ツールチップがある用語は点線の下線で示す（ツールチップをOFFにすると消える） */
+html[data-ghja-tips] [data-ghja-tip][data-ghja]::after {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+/* 本文翻訳の訳文。原文の直後に、左線付きの控えめなブロックとして出す */
+.markdown-body .ghja-tr {
+  margin: 0.25em 0 0.75em;
+  padding-inline-start: 0.75em;
+  border-inline-start: 3px solid var(--borderColor-accent-muted, rgba(84, 174, 255, 0.4));
+  color: var(--fgColor-muted, var(--color-fg-muted, #59636e));
+  font-size: 0.95em;
+}

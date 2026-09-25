@@ -1,0 +1,17 @@
+{
+  "name": "github-ja-assist",
+  "version": "0.2.0",
+  "private": true,
+  "description": "GitHub 日本語アシスト - development tooling only; the extension itself has no runtime dependencies",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "test": "node --test tests/fixture.test.mjs",
+    "test:live": "node --test --test-concurrency=1 tests/live.test.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

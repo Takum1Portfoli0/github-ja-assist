@@ -190,6 +190,60 @@ if (!manifest.content_scripts?.some((entry) => {
   errors.push('manifest.json: shared.js must load before content.js');
 }
 
+// ---- 学習用グロッサリー（GitHub 日本語アシストで追加） ----
+const MAX_INLINE_LABEL = 16; // content.js と同じ値。これより長い ja は横に出ずツールチップだけになる
+const glossaryPath = 'dictionaries/glossary.ja.json';
+const glossary = readJson(glossaryPath);
+const jaDictionary = parseDictionary('dictionaries/ja.json');
+if (glossary && jaDictionary) {
+  const dictKeys = new Set(Object.keys(jaDictionary.translations));
+  const terms = glossary.terms || {};
+  const names = new Map();
+  for (const [key, term] of Object.entries(terms)) {
+    const where = `${glossaryPath}: term "${key}"`;
+    if (key !== key.trim() || !key) errors.push(`${where}: key must be non-empty and trimmed`);
+    if (term.ja !== undefined && (typeof term.ja !== 'string' || !term.ja.trim())) errors.push(`${where}: ja must be a non-empty string`);
+    if (term.description !== undefined && (typeof term.description !== 'string' || !term.description.trim())) errors.push(`${where}: description must be a non-empty string`);
+    if (term.ja === undefined && term.description === undefined) errors.push(`${where}: needs ja or description`);
+    if (term.ja === undefined && !dictKeys.has(key)) errors.push(`${where}: has no ja and is not in dictionaries/ja.json, so it has no label`);
+    if (term.aliases !== undefined && !(Array.isArray(term.aliases) && term.aliases.every((a) => typeof a === 'string' && a && a.trim() === a))) {
+      errors.push(`${where}: aliases must be an array of trimmed, non-empty strings`);
+    }
+    for (const name of [key, ...(Array.isArray(term.aliases) ? term.aliases : [])]) {
+      if (names.has(name)) errors.push(`${where}: "${name}" is already defined by term "${names.get(name)}"`);
+      names.set(name, key);
+    }
+    // 日本語優先モードでは ja が画面に書き込まれる。それが英語キーでもあると再翻訳が連鎖する
+    if (typeof term.ja === 'string' && (dictKeys.has(term.ja) || term.ja in terms)) {
+      errors.push(`${where}: ja "${term.ja}" is itself a dictionary key and would be re-translated`);
+    }
+    if (typeof term.ja === 'string' && term.ja.length > MAX_INLINE_LABEL) {
+      warnings.push(`${where}: ja is longer than ${MAX_INLINE_LABEL} characters and will only appear in the tooltip`);
+    }
+  }
+
+  const pages = glossary.pages || {};
+  for (const [key, page] of Object.entries(pages)) {
+    for (const field of ['title', 'ja', 'description']) {
+      if (typeof page?.[field] !== 'string' || !page[field].trim()) errors.push(`${glossaryPath}: page "${key}" needs a non-empty ${field}`);
+    }
+  }
+  // assist.js が返しうるページ種別は、すべて説明文を持っていなければならない
+  // 対象は assist.js のページ判定部分（SITE_PAGES から detectPage() の終わりまで）だけ
+  const assistSource = readText('assist.js');
+  const detectSection = assistSource.slice(assistSource.indexOf('const SITE_PAGES'), assistSource.indexOf('let settings'));
+  if (!detectSection) errors.push('assist.js: page detection section (const SITE_PAGES ... let settings) not found');
+  const usedPages = new Set([
+    ...[...detectSection.matchAll(/,\s*'([a-z-]+)'\]/g)].map((m) => m[1]),
+    // detectPage() の return 'org' や ? 'dashboard' : null のような戻り値
+    ...[...detectSection.matchAll(/(?:return|\?)\s*'([a-z-]+)'/g)].map((m) => m[1])
+  ]);
+  for (const key of usedPages) {
+    if (!(key in pages)) errors.push(`${glossaryPath}: page "${key}" is used by assist.js but has no entry`);
+  }
+  console.log(`glossary: ${Object.keys(terms).length} terms, ${names.size} names, ${Object.keys(pages).length} pages (${usedPages.size} used by assist.js)`);
+}
+
 if (warnings.length > 0) {
   console.warn(`\nWarnings:\n- ${warnings.join('\n- ')}`);
 }

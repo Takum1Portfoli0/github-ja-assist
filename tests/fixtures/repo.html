@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="analytics-location" content="{{ANALYTICS_LOCATION}}">
+<title>fixture - GitHub-like page</title>
+<style>
+  :root { --fgColor-default: #1f2328; --fgColor-muted: #59636e; --bgColor-default: #ffffff; --borderColor-default: #d1d9e0; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fgColor-default: #f0f6fc; --fgColor-muted: #9198a1; --bgColor-default: #0d1117; --borderColor-default: #3d444d; }
+  }
+  body { font: 14px/1.5 -apple-system, "Segoe UI", sans-serif; color: var(--fgColor-default); background: var(--bgColor-default); margin: 0; }
+  nav a { margin-right: 16px; color: inherit; }
+  /* GitHubのUnderlineNavと同じ「太字幅の予約」 */
+  [data-content]::before { content: attr(data-content); display: block; height: 0; visibility: hidden; font-weight: 600; }
+  .uses-after::after { content: "▾"; margin-left: 4px; }
+</style>
+</head>
+<body class="logged-in">
+<header role="banner" id="global-header">
+  <nav aria-label="Global">
+    <a href="/notifications">Notifications</a>
+    <button type="button" id="search-button" aria-label="Search or jump to…">Type <kbd>/</kbd> to search</button>
+  </nav>
+</header>
+
+<main>
+  <ul id="pagehead-actions">
+    <li><a id="fork-button" href="/octo/demo/fork">Fork <span class="Counter">3</span></a></li>
+    <li><button type="button" id="watch-button"><span id="watch-label">Watch</span></button></li>
+    <li><button type="button" id="star-button" aria-label="Star this repository (12)"><span>Star</span></button></li>
+    <li><button type="button" id="menu-button" class="uses-after"><span class="uses-after" id="uses-after-label">Settings</span></button></li>
+  </ul>
+
+  <nav aria-label="Repository" id="repo-nav">
+    <a href="/octo/demo" aria-current="page"><span data-content="Code">Code</span></a>
+    <a href="/octo/demo/issues"><span data-content="Issues">Issues</span> <span class="Counter">5</span></a>
+    <a href="/octo/demo/pulls"><span data-content="Pull requests">Pull requests</span></a>
+    <a href="/octo/demo/actions"><span data-content="Actions">Actions</span></a>
+    <a href="/octo/demo/projects"><span data-content="Projects">Projects</span></a>
+    <a href="/octo/demo/security"><span data-content="Security">Security</span></a>
+    <a href="/octo/demo/pulse"><span data-content="Insights">Insights</span></a>
+    <a href="/octo/demo/settings"><span data-content="Settings">Settings</span></a>
+  </nav>
+
+  <!-- ここから下はユーザーが作った内容。辞書のキーと同じ文字列をわざと使っている -->
+  <div id="user-content">
+    <nav aria-label="Wiki pages"><a href="/octo/demo/wiki/Settings">Settings</a> <a href="/octo/demo/wiki">Home</a></nav>
+    <nav aria-label="File Tree Navigation"><ul role="tree"><li role="treeitem"><span>Actions</span></li><li role="treeitem"><span>Settings</span></li></ul></nav>
+    <table id="file-list">
+      <tr><td><a href="/octo/demo/tree/main/Code">Code</a></td></tr>
+      <tr><td><a href="/octo/demo/blob/main/Issues" aria-label="Issues, (File)">Issues</a></td></tr>
+    </table>
+    <p>Owner: <a data-hovercard-type="user" href="/Settings">Settings</a>, repo: <a data-hovercard-type="repository" href="/octo/Wiki">Wiki</a></p>
+    <button type="button" aria-label="Fork branch" id="branch-button"><span>Fork</span></button>
+    <a href="/octo/demo/commit/0a1b2c3d4e5f" id="commit-link">Merge pull request</a>
+    <h1 class="gh-header-title"><bdi class="markdown-title">Pull requests</bdi></h1>
+    <table class="diff-table" id="diff"><tr><td class="blob-code"><span class="blob-code-inner">+ Settings</span></td></tr><tr><td class="blob-code"><code>- Fork</code></td></tr></table>
+    <pre id="code-block"><code>git clone https://github.com/octo/demo.git
+Pull requests
+Issues</code></pre>
+    <article class="markdown-body" id="readme">
+      <h2>Code</h2>
+      <p>Press the <code>Fork</code> button, then run <code>npm install</code> and open a Pull request.</p>
+      <ul>
+        <li>Star the repository if it helps.
+          <ul><li>Watch it to receive notifications about new releases.</li></ul>
+        </li>
+      </ul>
+      <p>日本語で書かれた段落はそのまま残ります。</p>
+      <pre><code>const Issues = "Pull requests"; // must never change</code></pre>
+      <p>See https://example.com/docs for details.</p>
+    </article>
+  </div>
+
+  <div role="dialog" aria-label="Keyboard shortcuts" id="shortcuts-dialog">
+    <h2>Keyboard shortcuts</h2>
+    <p><kbd>g</kbd> <kbd>c</kbd> Go to Code</p>
+  </div>
+</main>
+
+<script>
+  // GitHubのキーボードショートカットの代わり。拡張がEscapeなどを横取りしないか確かめる
+  window.__keys = [];
+  document.addEventListener('keydown', (event) => window.__keys.push(event.key));
+</script>
+</body>
+</html>

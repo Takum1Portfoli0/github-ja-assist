@@ -1,27 +1,51 @@
 {
   "extensionName": {
-    "message": "GitHub UI Translator"
+    "message": "GitHub Japanese Assist"
   },
   "extensionDescription": {
-    "message": "Translates the GitHub UI locally using bundled language dictionaries."
+    "message": "Keeps GitHub's English terms and adds small Japanese labels, concept tooltips and a page guide. Bodies are translated on-device only when you ask."
   },
   "actionTitle": {
-    "message": "GitHub UI Translator"
+    "message": "GitHub Japanese Assist"
   },
   "translationLabel": {
-    "message": "Translation"
+    "message": "Japanese assist"
   },
   "translationToggleLabel": {
-    "message": "Enable or disable translation"
+    "message": "Enable or disable the extension"
   },
   "translationEnabledStatus": {
-    "message": "ON: Translate the GitHub UI"
+    "message": "ON: Show Japanese help on GitHub"
   },
   "translationDisabledStatus": {
-    "message": "OFF: Show the original English UI"
+    "message": "OFF: Show GitHub unchanged"
+  },
+  "modeLabel": {
+    "message": "Display mode"
+  },
+  "modeLearn": {
+    "message": "English + small Japanese (recommended)"
+  },
+  "modeJapanese": {
+    "message": "Japanese first, English small"
+  },
+  "modeOriginal": {
+    "message": "English only (GitHub default)"
+  },
+  "tooltipsLabel": {
+    "message": "Explain terms on hover"
+  },
+  "pageGuideLabel": {
+    "message": "Page guide"
+  },
+  "contentTranslationLabel": {
+    "message": "\"Read in Japanese\" button for README / Issue / PR"
+  },
+  "contentTranslationNote": {
+    "message": "Bodies are translated only when you press the button, on this device, by Chrome's built-in translator. Nothing is sent to other servers."
   },
   "languageLabel": {
-    "message": "Language"
+    "message": "Dictionary language"
   },
   "globalHeaderTranslationLabel": {
     "message": "Translate global header"
@@ -33,10 +57,10 @@
     "message": "If the global search stops opening (e.g. right after the browser starts), turn this off."
   },
   "repositoryLink": {
-    "message": "GitHub UI Translator on GitHub"
+    "message": "Based on GitHub UI Translator (MIT)"
   },
   "settingsTitle": {
-    "message": "GitHub UI Translator - Settings"
+    "message": "GitHub Japanese Assist - Settings"
   },
   "dictionaryInfoHeading": {
     "message": "Dictionary information"

@@ -17,6 +17,26 @@
     return data.languages;
   }
 
+  // 学習用グロッサリー（日本語のみ）。aliases は同じ項目への別表記として展開する。
+  // content.js と assist.js の両方から呼ばれるので、読み込みは1回に共有する
+  let glossaryPromise = null;
+  function loadGlossary() {
+    glossaryPromise ||= (async () => {
+      const res = await fetch(chrome.runtime.getURL('dictionaries/glossary.ja.json'));
+      if (!res.ok) throw new Error(`Failed to load glossary: ${res.status}`);
+      const data = await res.json();
+      // プロトタイプなしにする（"toString" 等の画面上の文字列を誤ってヒットさせない）
+      const terms = Object.create(null);
+      for (const [key, term] of Object.entries(data.terms || {})) {
+        for (const name of [key, ...(term.aliases || [])]) {
+          terms[name] = { src: key, ja: term.ja, description: term.description };
+        }
+      }
+      return { terms, pages: Object.assign(Object.create(null), data.pages) };
+    })();
+    return glossaryPromise;
+  }
+
   function getMessage(key, substitutions) {
     return chrome.i18n.getMessage(key, substitutions) || key;
   }
@@ -35,6 +55,7 @@
 
   globalThis.GitHubUITranslator = {
     getMessage,
+    loadGlossary,
     loadLanguages,
     localizeDocument,
     stripJsonComments

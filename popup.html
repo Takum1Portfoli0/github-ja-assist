@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GitHub UI Translator</title>
+<title>GitHub Japanese Assist</title>
 <style>
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    width: 220px;
+    width: 260px;
     padding: 12px;
     margin: 0;
     color: #1f2328;
@@ -20,6 +20,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+  .option-section .row + .row {
+    margin-top: 8px;
+  }
+  .modes {
+    margin: 12px 0 0;
+    padding: 8px 10px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .modes legend {
+    padding: 0 4px;
+    color: #57606a;
+  }
+  .modes label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+  }
+  .note {
+    margin: 8px 0 0;
+    color: #57606a;
+    font-size: 11px;
+    line-height: 1.4;
   }
   .status {
     font-size: 12px;
@@ -113,7 +139,7 @@
 </style>
 </head>
 <body>
-  <h1>GitHub UI Translator</h1>
+  <h1 data-i18n="extensionName">GitHub Japanese Assist</h1>
   <div class="row">
     <span data-i18n="translationLabel">Translation</span>
     <label class="switch">
@@ -122,6 +148,36 @@
     </label>
   </div>
   <p class="status" id="status"></p>
+  <fieldset class="modes">
+    <legend data-i18n="modeLabel">Display mode</legend>
+    <label><input type="radio" name="mode" value="learn"> <span data-i18n="modeLearn">English + Japanese (recommended)</span></label>
+    <label><input type="radio" name="mode" value="ja"> <span data-i18n="modeJapanese">Japanese first</span></label>
+    <label><input type="radio" name="mode" value="original"> <span data-i18n="modeOriginal">English only (GitHub default)</span></label>
+  </fieldset>
+  <div class="option-section">
+    <div class="row">
+      <label class="option-label" for="tooltips-toggle" data-i18n="tooltipsLabel">Explain terms on hover</label>
+      <label class="switch">
+        <input type="checkbox" id="tooltips-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="row">
+      <label class="option-label" for="page-guide-toggle" data-i18n="pageGuideLabel">Page guide</label>
+      <label class="switch">
+        <input type="checkbox" id="page-guide-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="row">
+      <label class="option-label" for="content-translation-toggle" data-i18n="contentTranslationLabel">"Read in Japanese" button</label>
+      <label class="switch">
+        <input type="checkbox" id="content-translation-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="note" data-i18n="contentTranslationNote">Bodies are translated only when you press the button, on this device with Chrome's built-in translator. Nothing is sent to other servers.</p>
+  </div>
   <div class="lang-row">
     <label for="language" data-i18n="languageLabel">Language</label>
     <select id="language"></select>
@@ -137,7 +193,7 @@
     <p class="warning" data-i18n="globalHeaderTranslationWarning">If the global search stops opening (e.g. right after the browser starts), turn this off.</p>
   </div>
   <div class="footer">
-    <a id="repo-link" href="https://github.com/nobuo-miura/github-ui-translator" target="_blank" rel="noopener noreferrer" data-i18n="repositoryLink">GitHub UI Translator on GitHub</a>
+    <a id="repo-link" href="https://github.com/nobuo-miura/github-ui-translator" target="_blank" rel="noopener noreferrer" data-i18n="repositoryLink">Based on GitHub UI Translator (MIT)</a>
   </div>
   <script src="shared.js"></script>
   <script src="popup.js"></script>

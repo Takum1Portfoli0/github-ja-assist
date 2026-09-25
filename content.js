@@ -11,6 +11,24 @@
   const GLOBAL_HEADER_SELECTOR = 'header[role="banner"]';
   let translateGlobalHeader = false;
 
+  // ---- GitHub 日本語アシスト（fork）で追加した表示モード ----
+  // 'learn': 英語の表示・aria-label・placeholderには一切触れず、テキストノードの親要素に
+  //   data-ghja 属性を付け、assist.css の ::after で小さな日本語を添える（既定）。
+  //   DOMノードを挿入しないのでReactの差分検出やhydrationとぶつからず、
+  //   ::after の代替テキストを空にしているのでアクセシブルネームも変わらない。
+  // 'ja': 上流と同じく日本語へ置き換え、元の英語を ::after で小さく添える。
+  // 'original'（英語のみ）はこのスクリプト自体を動かさない。
+  let displayMode = 'learn';
+  // 学習用グロッサリー（language が ja のときだけ読み込む）。辞書より優先して使う
+  let glossaryTerms = Object.create(null);
+  // これより長い訳は英語の横に出さず、ツールチップでだけ見せる（ボタンやタブの幅を守る）
+  const MAX_INLINE_LABEL = 16;
+  const annotationQueue = [];
+  // 注釈を付けた要素 → その注釈の元になったテキストノード
+  const annotationOwner = new WeakMap();
+  // GitHub側がすでに ::after を使っている要素。上書きすると見た目を壊すので注釈しない
+  const pseudoBlocked = new WeakSet();
+
   const BASE_SELECTOR = [
     'nav',
     'header',
@@ -26,7 +44,10 @@
     '[role="dialog"]',
     '[role="listbox"]',
     '[role="button"]',
-    '[aria-label]'
+    '[aria-label]',
+    // リポジトリ右上のForkボタン（GitHub 日本語アシストで追加）。<a>でaria-labelも
+    // roleも無いため上のどれにも当たらない。中身は固定の「Fork」と件数だけ
+    '#fork-button'
   ];
 
   // Settings、Organization管理、リポジトリ作成、Issue/PR画面では
@@ -487,7 +508,9 @@
       // Homeページ自体へのリンクは末尾にページ名が付かず/wikiのみになるため、
       // ページ名部分を省略可能にする。"_new"は新規ページ作成への固定リンクで
       // ページ名ではないため除外する
-      /^\/[^/]+\/[^/]+\/wiki(\/(?!_new$)[^/]+)?$/.test(path) ||
+      // ただしリポジトリのタブ（Code/Issues/…/Wiki）の「Wiki」は固定UIなので除外しない
+      // （GitHub 日本語アシストで追加。タブ列にはユーザーが名前を付けられる項目がない）
+      (/^\/[^/]+\/[^/]+\/wiki(\/(?!_new$)[^/]+)?$/.test(path) && !link.closest('nav[aria-label="Repository"]')) ||
       // ファイル・ディレクトリ一覧の各行へのリンク（/tree/ブランチ/パス、/blob/ブランチ/パス）。
       // ファイル名・フォルダ名はユーザーが付けたものであり、"Code"や"Packages"の
       // ように辞書キーと偶然完全一致することがある。これらの行はGitHub側で
@@ -631,15 +654,67 @@
   function getSettings() {
     return new Promise((resolve) => {
       chrome.storage.local.get(
-        { enabled: true, language: 'ja', translateGlobalHeader: true },
+        { enabled: true, language: 'ja', translateGlobalHeader: true, mode: 'learn' },
         (items) => resolve(items)
       );
     });
   }
 
+  // グロッサリーの意味訳を辞書の訳より優先する
+  function lookup(dict, text) {
+    return glossaryTerms[text]?.ja || dict[text];
+  }
+
+  // shown: 小さく添える文字列、displayed: 画面に表示されている文字列（同じなら添えない）
+  function queueAnnotation(textNode, src, shown, displayed) {
+    const el = textNode.parentElement;
+    if (!el) return;
+    const inline = shown !== displayed && shown.length <= MAX_INLINE_LABEL ? shown : null;
+    annotationQueue.push({ el, textNode, src, inline, tip: Boolean(glossaryTerms[src]?.description) });
+  }
+
+  // 翻訳できなかったテキストノードが、以前に注釈を付けたものなら注釈を外す
+  // （Reactが "Watch" を別の文言に書き換えた場合など）。日本語優先モードで自分が
+  // 書き込んだ訳文そのものは、元の英語との対応が保たれているので外さない
+  function clearStaleAnnotation(textNode, text, dict) {
+    const el = textNode.parentElement;
+    if (!el || annotationOwner.get(el) !== textNode) return;
+    const src = el.getAttribute('data-ghja-src');
+    if (!src || text === src || text === lookup(dict, src)) return;
+    el.removeAttribute('data-ghja-src');
+    el.removeAttribute('data-ghja');
+    el.removeAttribute('data-ghja-tip');
+    annotationOwner.delete(el);
+  }
+
+  // 読み取り（getComputedStyle）を先にまとめ、書き込みを後にまとめる。
+  // 交互に行うと要素の数だけスタイル再計算が走る。属性は値が変わるときだけ書く
+  function flushAnnotations() {
+    const items = annotationQueue.splice(0);
+    for (const { el } of items) {
+      if (el.hasAttribute('data-ghja-src') || pseudoBlocked.has(el)) continue;
+      const content = getComputedStyle(el, '::after').content;
+      if (content && content !== 'none' && content !== 'normal') pseudoBlocked.add(el);
+    }
+    const setAttr = (el, name, value) => {
+      if (value === null) {
+        if (el.hasAttribute(name)) el.removeAttribute(name);
+      } else if (el.getAttribute(name) !== value) {
+        el.setAttribute(name, value);
+      }
+    };
+    for (const { el, textNode, src, inline, tip } of items) {
+      annotationOwner.set(el, textNode);
+      setAttr(el, 'data-ghja-src', src);
+      setAttr(el, 'data-ghja', pseudoBlocked.has(el) ? null : inline);
+      setAttr(el, 'data-ghja-tip', tip ? '' : null);
+    }
+  }
+
   function translateElement(el, dict) {
     const label = el.getAttribute('aria-label');
-    if (label) {
+    // 学習モードではaria-label・placeholder・ボタンのvalueを書き換えない（原文の英語のまま）
+    if (label && displayMode === 'ja') {
       const trimmed = label.trim();
       const targetMatch = el.closest('.js-release-target-wrapper') && trimmed.match(/^Target:\s+(.+)$/);
       const translated = dict[trimmed] || (targetMatch && dict['Target:'] && `${dict['Target:']} ${targetMatch[1]}`);
@@ -653,7 +728,7 @@
 
     // placeholder属性もテキストノードではないため個別に処理する
     const placeholder = el.getAttribute('placeholder');
-    if (placeholder) {
+    if (placeholder && displayMode === 'ja') {
       const trimmed = placeholder.trim();
       const translated = dict[trimmed];
       if (translated) {
@@ -678,6 +753,7 @@
     // 入力内容そのものであり、翻訳すると入力中の値を書き換えてしまうため
     if (el.tagName === 'INPUT') {
       if (el.type !== 'submit' && el.type !== 'button' && el.type !== 'reset') return;
+      if (displayMode !== 'ja') return;
       const value = el.value;
       const trimmed = value.trim();
       const translated = dict[trimmed];
@@ -725,19 +801,29 @@
       // 1つのテキストノード（例: "Target: main"）に結合する。完全一致の原則を保ち
       // つつ、用途を限定して固定の接頭辞だけを訳し、選択値は原文のまま保持する
       const targetMatch = textNode.parentElement.closest('.js-release-target-wrapper') && lookupText.match(/^Target:\s+(.+)$/);
-      const translated = dict[lookupText] || (targetMatch && dict['Target:'] && `${dict['Target:']} ${targetMatch[1]}`);
-      if (translated) {
-        // 置換文字列中の "$&" 等が特殊解釈されないよう関数形式で渡す
-        const replacement = value.replace(trimmed, () => translated);
-        // 値が変わらない場合は書き込まない。nodeValueへの代入は同じ文字列でも
-        // characterDataミューテーションを発火させる仕様のため、辞書に
-        // "Wiki": "Wiki" のような自己マッピング（意図的に未翻訳の固有名詞）が
-        // あると収束せず、requestAnimationFrameが実行されるたびに同じ処理が続く。
-        // 表示は一切変わらないので気づきにくいが、不要な再走査が継続する。
-        // "Wikis" -> "Wiki" のように訳文が別のキーでもある場合も、2巡目でここに
-        // 到達して同じループになるため、書き込み直前の比較で止めるのが確実
-        if (replacement !== value) textNode.nodeValue = replacement;
+      const direct = lookup(dict, lookupText);
+      const translated = direct || (targetMatch && dict['Target:'] && `${dict['Target:']} ${targetMatch[1]}`);
+      if (!translated) {
+        clearStaleAnnotation(textNode, lookupText, dict);
+        continue;
       }
+      if (displayMode === 'learn') {
+        // 英語は書き換えない。小さな日本語は属性経由でCSSが描く
+        if (direct) queueAnnotation(textNode, lookupText, direct, lookupText);
+        continue;
+      }
+      // 日本語優先モード: 日本語へ置き換え、元の英語を小さく添える
+      if (direct) queueAnnotation(textNode, lookupText, lookupText, direct);
+      // 置換文字列中の "$&" 等が特殊解釈されないよう関数形式で渡す
+      const replacement = value.replace(trimmed, () => translated);
+      // 値が変わらない場合は書き込まない。nodeValueへの代入は同じ文字列でも
+      // characterDataミューテーションを発火させる仕様のため、辞書に
+      // "Wiki": "Wiki" のような自己マッピング（意図的に未翻訳の固有名詞）が
+      // あると収束せず、requestAnimationFrameが実行されるたびに同じ処理が続く。
+      // 表示は一切変わらないので気づきにくいが、不要な再走査が継続する。
+      // "Wikis" -> "Wiki" のように訳文が別のキーでもある場合も、2巡目でここに
+      // 到達して同じループになるため、書き込み直前の比較で止めるのが確実
+      if (replacement !== value) textNode.nodeValue = replacement;
     }
   }
 
@@ -749,15 +835,26 @@
     root.querySelectorAll(allowlistSelector).forEach((el) => {
       if (!isExcludedElement(el)) translateElement(el, dict);
     });
+    flushAnnotations();
   }
 
   (async () => {
-    const { enabled, language, translateGlobalHeader: globalHeaderEnabled } = await getSettings();
-    if (!enabled) return;
+    const { enabled, language, translateGlobalHeader: globalHeaderEnabled, mode } = await getSettings();
+    if (!enabled || mode === 'original') return;
     translateGlobalHeader = globalHeaderEnabled;
+    displayMode = mode === 'ja' ? 'ja' : 'learn';
 
     const dict = await loadDictionary(language);
     if (Object.keys(dict).length === 0) return;
+    if (language === 'ja') {
+      try {
+        glossaryTerms = (await globalThis.GitHubUITranslator.loadGlossary()).terms;
+      } catch (e) {
+        console.error('[GitHub UI Translator] グロッサリーの読み込みに失敗しました', e);
+      }
+    }
+    // assist.js のツールチップが、辞書だけにある語の訳も引けるようにする
+    globalThis.GitHubUITranslator.lookup = (text) => lookup(dict, text);
 
     // SPA対応: GitHubの動的DOM更新に追従する
     // 自分の書き込みもcharacterDataミューテーションとして観測されるため、再走査が
@@ -866,7 +963,7 @@
   // リロードが重複するだけで害はない）
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    if ('enabled' in changes || 'language' in changes || 'translateGlobalHeader' in changes) {
+    if ('enabled' in changes || 'language' in changes || 'translateGlobalHeader' in changes || 'mode' in changes) {
       location.reload();
     }
   });

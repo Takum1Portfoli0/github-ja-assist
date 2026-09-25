@@ -4,6 +4,13 @@ const toggle = document.getElementById('toggle');
 const status = document.getElementById('status');
 const languageSelect = document.getElementById('language');
 const globalHeaderToggle = document.getElementById('global-header-toggle');
+const modeRadios = [...document.querySelectorAll('input[name="mode"]')];
+// ページを再読み込みせずにその場で反映される設定（assist.js が変更を監視している）
+const liveToggles = {
+  tooltips: document.getElementById('tooltips-toggle'),
+  pageGuide: document.getElementById('page-guide-toggle'),
+  contentTranslation: document.getElementById('content-translation-toggle')
+};
 
 // ポップアップを開いた直後（＝ポップアップが生きていることが保証されている間）に
 // GitHubタブのIDを確定させておく。変更イベントの発生時にchrome.tabs.query()の
@@ -35,14 +42,34 @@ async function initialize() {
   }
 
   chrome.storage.local.get(
-    { enabled: true, language: 'ja', translateGlobalHeader: true },
+    {
+      enabled: true,
+      language: 'ja',
+      translateGlobalHeader: true,
+      mode: 'learn',
+      tooltips: true,
+      pageGuide: true,
+      contentTranslation: true
+    },
     (items) => {
       toggle.checked = items.enabled;
       updateStatus(items.enabled);
       languageSelect.value = items.language;
       globalHeaderToggle.checked = items.translateGlobalHeader;
+      modeRadios.forEach((radio) => { radio.checked = radio.value === items.mode; });
+      for (const [key, input] of Object.entries(liveToggles)) input.checked = items[key];
     }
   );
+}
+
+modeRadios.forEach((radio) => radio.addEventListener('change', () => {
+  if (!radio.checked) return;
+  chrome.storage.local.set({ mode: radio.value });
+  reloadGithubTabs();
+}));
+
+for (const [key, input] of Object.entries(liveToggles)) {
+  input.addEventListener('change', () => chrome.storage.local.set({ [key]: input.checked }));
 }
 
 toggle.addEventListener('change', () => {
