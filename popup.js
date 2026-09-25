@@ -72,6 +72,22 @@ for (const [key, input] of Object.entries(liveToggles)) {
   input.addEventListener('change', () => chrome.storage.local.set({ [key]: input.checked }));
 }
 
+// 開いている GitHub のページで、日本語が付いていない文言を集めてクリップボードにコピーする。
+// 集めるのは content.js（読み取りのみ）。送信はせず、利用者が中身を見てから開発者に渡す
+const reportButton = document.getElementById('report-button');
+const reportStatus = document.getElementById('report-status');
+reportButton.addEventListener('click', async () => {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const result = await chrome.tabs.sendMessage(tab.id, { type: 'ghja:collect-untranslated' });
+    const lines = [`# ${result.path}`, ...result.missing.map(({ text, where }) => `${text}\t${where}`)];
+    await navigator.clipboard.writeText(lines.join('\n'));
+    reportStatus.textContent = getMessage('reportCopied', String(result.missing.length));
+  } catch {
+    reportStatus.textContent = getMessage('reportUnavailable');
+  }
+});
+
 toggle.addEventListener('change', () => {
   const enabled = toggle.checked;
   updateStatus(enabled);

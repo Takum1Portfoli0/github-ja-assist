@@ -95,5 +95,22 @@
         "content": "$1"
       }
     }
+  },
+  "reportButton": {
+    "message": "Copy untranslated text on this page"
+  },
+  "reportNote": {
+    "message": "Copies the visible labels that still have no Japanese, so you can send them to the developer. Check the copied text before sending it."
+  },
+  "reportCopied": {
+    "message": "Copied $COUNT$ items. Paste them into your message.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "reportUnavailable": {
+    "message": "Open a GitHub page (with Japanese assist on and a display mode other than English only), then try again."
   }
 }

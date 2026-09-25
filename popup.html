@@ -41,6 +41,20 @@
     gap: 6px;
     padding: 2px 0;
   }
+  .report {
+    width: 100%;
+    padding: 5px 8px;
+    font: inherit;
+    font-size: 12px;
+    color: #1f2328;
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .report:hover {
+    background: #eef1f4;
+  }
   .note {
     margin: 8px 0 0;
     color: #57606a;
@@ -191,6 +205,10 @@
       </label>
     </div>
     <p class="warning" data-i18n="globalHeaderTranslationWarning">If the global search stops opening (e.g. right after the browser starts), turn this off.</p>
+  </div>
+  <div class="option-section">
+    <button type="button" id="report-button" class="report" data-i18n="reportButton">Copy untranslated text on this page</button>
+    <p class="note" id="report-status" role="status" data-i18n="reportNote">Copies the visible labels that still have no Japanese, so you can send them to the developer. Check the copied text before sending it.</p>
   </div>
   <div class="footer">
     <a id="repo-link" href="https://github.com/nobuo-miura/github-ui-translator" target="_blank" rel="noopener noreferrer" data-i18n="repositoryLink">Based on GitHub UI Translator (MIT)</a>

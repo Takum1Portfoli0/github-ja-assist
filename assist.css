@@ -30,6 +30,13 @@ header [data-ghja]::after {
   text-align: center;
 }
 
+/* 長い訳は英語の下の行に、折り返して出す（横に並べると幅があふれる） */
+[data-ghja][data-ghja-block]::after {
+  display: block;
+  margin: 2px 0 0;
+  white-space: normal;
+}
+
 /* 説明ツールチップがある用語は点線の下線で示す（ツールチップをOFFにすると消える） */
 html[data-ghja-tips] [data-ghja-tip][data-ghja]::after {
   text-decoration: underline dotted;

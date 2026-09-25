@@ -218,7 +218,20 @@ if (glossary && jaDictionary) {
       errors.push(`${where}: ja "${term.ja}" is itself a dictionary key and would be re-translated`);
     }
     if (typeof term.ja === 'string' && term.ja.length > MAX_INLINE_LABEL) {
-      warnings.push(`${where}: ja is longer than ${MAX_INLINE_LABEL} characters and will only appear in the tooltip`);
+      warnings.push(`${where}: ja is longer than ${MAX_INLINE_LABEL} characters and is shown below the English (tooltip only inside buttons)`);
+    }
+  }
+
+  // labels: 上流の辞書に無い画面文言（ja のみ）。上流・terms と重なってはいけない
+  const labels = glossary.labels || {};
+  for (const [key, value] of Object.entries(labels)) {
+    const where = `${glossaryPath}: label "${key}"`;
+    if (!key || key !== key.trim()) errors.push(`${where}: key must be non-empty and trimmed`);
+    if (typeof value !== 'string' || !value.trim()) errors.push(`${where}: value must be a non-empty string`);
+    if (dictKeys.has(key)) errors.push(`${where}: already in dictionaries/ja.json`);
+    if (names.has(key)) errors.push(`${where}: already a glossary term or alias`);
+    if (typeof value === 'string' && (dictKeys.has(value) || names.has(value) || value in labels)) {
+      errors.push(`${where}: value "${value}" is itself a key and would be re-translated`);
     }
   }
 
@@ -241,7 +254,7 @@ if (glossary && jaDictionary) {
   for (const key of usedPages) {
     if (!(key in pages)) errors.push(`${glossaryPath}: page "${key}" is used by assist.js but has no entry`);
   }
-  console.log(`glossary: ${Object.keys(terms).length} terms, ${names.size} names, ${Object.keys(pages).length} pages (${usedPages.size} used by assist.js)`);
+  console.log(`glossary: ${Object.keys(terms).length} terms, ${names.size} names, ${Object.keys(labels).length} labels, ${Object.keys(pages).length} pages (${usedPages.size} used by assist.js)`);
 }
 
 if (warnings.length > 0) {

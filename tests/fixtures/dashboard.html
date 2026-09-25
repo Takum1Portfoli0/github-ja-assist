@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="analytics-location" content="{{ANALYTICS_LOCATION}}">
+<title>GitHub</title>
+<style>
+  body { font: 14px/1.5 -apple-system, "Segoe UI", sans-serif; margin: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  [popover] { margin: 0; }
+</style>
+</head>
+<!-- ログイン後のホーム（ダッシュボード）を模したページ。実物の DOM そのものではない -->
+<body class="logged-in">
+<header role="banner" id="app-header">
+  <a href="/" aria-label="Homepage">GitHub</a>
+  <span id="context-label">Dashboard</span>
+  <button type="button" aria-label="Search or jump to…" id="search-button">Type <kbd>/</kbd> to search</button>
+</header>
+<aside id="sidebar">
+  <h2 id="top-repos">Top repositories</h2>
+  <a class="Button" href="/new" id="new-repo"><span id="new-label">New</span></a>
+  <input type="text" id="your-repos-filter" placeholder="Find a repository…">
+  <ul id="repo-list">
+    <li><a data-hovercard-type="repository" href="/Takum1Portfoli0/Portfolio">Takum1Portfoli0/Portfolio</a></li>
+    <li><a data-hovercard-type="repository" href="/octo/Feed">octo/Feed</a></li>
+  </ul>
+</aside>
+<main>
+  <h1 id="home-title">Home</h1>
+  <!-- アイコンだけのボタンと、その名前を出す GitHub のツールチップ（ヘッダーの外に置く） -->
+  <div><button type="button" id="copilot-button" aria-labelledby="copilot-tip">⚙</button><span role="tooltip" id="copilot-tip">Chat with Copilot</span></div>
+  <div id="composer">
+    <textarea id="copilot-input" placeholder="Ask anything or type @ to add context"></textarea>
+    <button type="button"><span>Auto</span></button>
+    <button type="button"><span>Ask</span></button>
+    <button type="button"><span>All repositories</span></button>
+    <button type="button"><span id="debug-label">Debug</span></button>
+    <button type="button"><span>Agent</span></button>
+    <button type="button"><span>Create issue</span></button>
+    <button type="button"><span>Write code</span></button>
+    <button type="button"><span>Git</span></button>
+    <button type="button"><span id="frob">Frobnicate widgets</span></button>
+    <button type="button"><span id="long-in-button">There aren't any published security advisories</span></button>
+  </div>
+  <div id="banner">
+    <h2 id="banner-title">The GitHub Copilot app</h2>
+    <p id="banner-desc">An agent-driven desktop experience built natively on GitHub.</p>
+    <a class="btn" href="/copilot" id="download"><span>Download for Windows</span></a>
+  </div>
+  <h2 id="feed-title">Feed</h2>
+  <h2 id="long-heading">No pull requests matched your search</h2>
+  <section id="feed">
+    <h3><span id="trending">Trending repositories</span></h3>
+    <a id="see-more" href="/trending">See more</a>
+    <article>
+      <a data-hovercard-type="repository" href="/octo/Home" id="feed-repo">octo/Home</a>
+      <p id="feed-desc">Feed</p>
+    </article>
+    <nav><a id="label-link" href="/octo/demo/issues?q=state%3Aopen%20label%3A%22Settings%22">Settings<span class="sr-only">Code</span></a></nav>
+  </section>
+</main>
+</body>
+</html>

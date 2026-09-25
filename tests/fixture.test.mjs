@@ -9,6 +9,9 @@ import { chromium } from 'playwright';
 import { launch, setSettings, EXTENSION_DIR, REPO_DIR } from './browser.mjs';
 
 const TEMPLATE = fs.readFileSync(path.join(REPO_DIR, 'tests/fixtures/repo.html'), 'utf8');
+// "/"（ログイン後のホーム）だけはダッシュボードを模したページで応答する
+const DASHBOARD = fs.readFileSync(path.join(REPO_DIR, 'tests/fixtures/dashboard.html'), 'utf8');
+const templateFor = (pathname) => (pathname === '/' ? DASHBOARD : TEMPLATE);
 const glossary = JSON.parse(fs.readFileSync(path.join(REPO_DIR, 'dictionaries/glossary.ja.json'), 'utf8'));
 const BASE = 'https://github.com';
 
@@ -32,7 +35,7 @@ async function fixtureBrowser(options = {}) {
       return route.fulfill({
         status: 200,
         contentType: 'text/html; charset=utf-8',
-        body: TEMPLATE.replace('{{ANALYTICS_LOCATION}}', analyticsFor(url.pathname))
+        body: templateFor(url.pathname).replace('{{ANALYTICS_LOCATION}}', analyticsFor(url.pathname))
       });
     }
     external.push(url.href);
@@ -108,6 +111,11 @@ describe('learning mode (default)', () => {
     assert.deepEqual(await page.$$eval('#pr-tabs [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Conversation', 'Files changed']);
     assert.deepEqual(await page.$$eval('#pr-nav [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Checks']);
     assert.equal(await page.$eval('#pr-title-link', (el) => el.hasAttribute('data-ghja-src')), false);
+  });
+
+  test('learning mode also reaches headings and links that upstream only scans on some pages', async () => {
+    assert.equal(await page.$eval('#about-heading', (el) => el.getAttribute('data-ghja')), glossary.terms.About.ja);
+    assert.equal(await page.$eval('#activity-link', (el) => el.getAttribute('data-ghja')), glossary.terms.Activity.ja);
   });
 
   test('annotates the Fork and Watch buttons', async () => {
@@ -331,6 +339,76 @@ describe('dynamic DOM and SPA navigation', () => {
   });
 });
 
+describe('logged-in dashboard (coverage)', () => {
+  let browser;
+  let page;
+  before(async () => {
+    browser = await fixtureBrowser();
+    page = await open(browser.context, '/');
+  });
+  after(() => browser.context.close());
+
+  const annotated = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll('[data-ghja-src]')]
+    .map((el) => [el.getAttribute('data-ghja-src'), el.getAttribute('data-ghja')])));
+
+  test('headings, link buttons, Copilot buttons, the header label and GitHub tooltips get Japanese', async () => {
+    const got = await annotated();
+    const expected = ['Dashboard', 'Top repositories', 'New', 'Home', 'Auto', 'Ask', 'All repositories', 'Debug', 'Agent',
+      'Create issue', 'Write code', 'Git', 'The GitHub Copilot app', 'Download for Windows', 'Feed', 'Trending repositories',
+      'See more', 'Chat with Copilot'];
+    const missing = expected.filter((key) => !got[key]);
+    assert.deepEqual(missing, [], `no Japanese on: ${missing.join(', ')}`);
+    assert.equal(got['Top repositories'], glossary.labels['Top repositories']);
+    assert.equal(got.Debug, glossary.labels.Debug);
+  });
+
+  test('placeholders show the Japanese after the English, exactly once', async () => {
+    const read = () => page.evaluate(() => [document.querySelector('#your-repos-filter').placeholder, document.querySelector('#copilot-input').placeholder]);
+    const first = await read();
+    assert.deepEqual(first, [
+      `Find a repository… （${glossary.labels['Find a repository…']}）`,
+      `Ask anything or type @ to add context （${glossary.labels['Ask anything or type @ to add context']}）`
+    ]);
+    // 同じ範囲を再走査させても二重に付かない
+    await page.evaluate(() => { document.querySelector('#top-repos').firstChild.nodeValue = 'Top repositories'; });
+    await page.waitForTimeout(200);
+    assert.deepEqual(await read(), first);
+  });
+
+  test('long Japanese goes on its own line, but only the tooltip inside buttons', async () => {
+    const heading = await page.$eval('#long-heading', (el) => ({ ja: el.getAttribute('data-ghja'), block: el.hasAttribute('data-ghja-block'), display: getComputedStyle(el, '::after').display }));
+    assert.deepEqual(heading, { ja: glossary.labels['No pull requests matched your search'], block: true, display: 'block' });
+    const inButton = await page.$eval('#long-in-button', (el) => ({ src: el.getAttribute('data-ghja-src'), ja: el.getAttribute('data-ghja') }));
+    assert.deepEqual(inButton, { src: "There aren't any published security advisories", ja: null });
+  });
+
+  test('repository names, feed descriptions and label links stay untouched', async () => {
+    const touched = await page.$$eval('#repo-list [data-ghja-src], #feed-repo[data-ghja-src], #feed-desc[data-ghja-src], #label-link [data-ghja-src], #label-link[data-ghja-src]', (els) => els.map((el) => el.outerHTML));
+    assert.deepEqual(touched, []);
+  });
+
+  test('the popup report lists visible labels still without Japanese, and no user content', async () => {
+    const control = await browser.context.newPage();
+    await control.goto(`chrome-extension://${browser.extensionId}/options.html`);
+    await page.bringToFront();
+    const result = await control.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      return chrome.tabs.sendMessage(tab.id, { type: 'ghja:collect-untranslated' });
+    });
+    await control.close();
+    const texts = result.missing.map((m) => m.text);
+    assert.ok(texts.includes('Frobnicate widgets'), `reported: ${texts.join(' | ')}`);
+    for (const userText of ['octo/Feed', 'octo/Home', 'Takum1Portfoli0/Portfolio', 'Settings', 'Code']) {
+      assert.ok(!texts.includes(userText), `${userText} must not be reported`);
+    }
+    for (const translated of ['Home', 'Top repositories', 'Debug', 'Find a repository…']) {
+      assert.ok(!texts.includes(translated), `${translated} already has Japanese`);
+    }
+    assert.ok(result.annotated > 10);
+    assert.deepEqual(browser.external, []);
+  });
+});
+
 describe('concept tooltips', () => {
   let browser;
   let page;
@@ -421,7 +499,8 @@ describe('page guide', () => {
     ['/orgs/acme/projects/7', 'projects'],
     ['/octo', 'profile'],
     ['/acme', 'org'],
-    ['/search?q=test', 'search']
+    ['/search?q=test', 'search'],
+    ['/', 'dashboard']
   ];
   for (const [pathname, key] of cases) {
     test(`${pathname} → ${key}`, async () => {

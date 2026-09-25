@@ -14,11 +14,13 @@ A Chrome extension that makes GitHub.com easier for Japanese speakers **without 
 - **Concept tooltips** on hover or keyboard focus, e.g. what a Fork, a Pull request or Actions actually is.
 - **Page guide**: a small panel naming the current page (Issues, Actions, Settings, …) with a one-line explanation.
 - **Body translation on request**: "本文を日本語で読む" uses Chrome's built-in Translator API (on device) and places each translation below its paragraph. Code blocks are never sent; inline code stays code. Unsupported browsers show the button as unsupported.
+- **Report missing Japanese**: the popup button "このページで日本語が付いていない文言をコピー" copies the visible labels on the current page that still have no Japanese (one per line, with where they are), so they can be added to the dictionary. It only copies to the clipboard; nothing is sent.
+- In learning mode, headings, links, table headers and placeholders are annotated on every page (text is never rewritten, so a false match only adds a label). Japanese-first mode, which rewrites text, keeps upstream's per-page scope.
 - Never touched: code, diffs, file/directory/repository/user/branch names, tags, commit hashes, URLs, and user-written bodies unless you ask.
 
 ## Install (unpacked)
 
-1. Unzip `github-ja-assist-v0.2.0.zip`, or build it (below).
+1. Unzip `github-ja-assist-v0.3.0.zip`, or build it (below).
 2. Open `chrome://extensions`, enable **Developer mode**.
 3. **Load unpacked** → select the folder containing `manifest.json`.
 4. Reload any open GitHub tab.
@@ -37,7 +39,7 @@ No data collection, no telemetry, no network calls. Only the `storage` permissio
 
 ## Known limitations
 
-- Only exact-match fixed UI strings from the dictionary are annotated; strings with numbers ("3 commits") and user-created text are not.
+- Only exact-match fixed UI strings from the dictionary are annotated; strings with numbers or dates ("3 commits", "Commits on Aug 1, 2026"), relative times and user-created text are not. Paragraph text (`<p>`) is left alone. Placeholders can be clipped in narrow inputs.
 - GitHub DOM changes can make labels disappear, or rarely attach to user content (the same structural limit as upstream).
 - Automated tests run logged out on public pages. Logged-in-only screens (e.g. repository Settings) are covered by the fixture page only.
 - **Actual on-device translation was not observed in this environment**: Chrome for Testing is not served translation models, and Edge 148 reports en→ja as unavailable. The DOM insertion is tested with a fake translator; cancel and unsupported paths are tested in real browsers. A manual check in branded Chrome 138+ is still owed.
@@ -47,6 +49,7 @@ No data collection, no telemetry, no network calls. Only the `storage` permissio
 - Tooltips are visual aids and are not announced by screen readers. They stay open while hovered and close with Esc.
 - Closing the page guide returns keyboard focus to the page as a whole.
 - While the pointer rests on a tooltip, the first click only closes it.
+- In Japanese-first mode the tab labels are wider than the English ones, so at narrow widths (e.g. 200% zoom) GitHub may move one more repository tab into its "…" menu. The default mode keeps the tab count unchanged.
 - On narrow screens the page guide can overlap bottom content; close it or turn it off.
 
 ## Development

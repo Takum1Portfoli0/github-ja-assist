@@ -21,6 +21,8 @@
   let displayMode = 'learn';
   // 学習用グロッサリー（language が ja のときだけ読み込む）。辞書より優先して使う
   let glossaryTerms = Object.create(null);
+  // 上流の辞書に無い画面文言の日本語（ja のみ。glossary.ja.json の labels。上流8言語の件数一致を崩さないため別に持つ）
+  let extraLabels = Object.create(null);
   // これより長い訳は英語の横に出さず、ツールチップでだけ見せる（ボタンやタブの幅を守る）
   const MAX_INLINE_LABEL = 16;
   // 日本語優先モードで添える英語の上限。"Security and quality" や "Compare & pull request" の
@@ -53,6 +55,8 @@
     '[role="listbox"]',
     '[role="button"]',
     '[aria-label]',
+    // GitHub 自身のツールチップ（アイコンだけのボタンの名前が出る）。GitHub 日本語アシストで追加
+    '[role="tooltip"]',
     // リポジトリ右上のForkボタン（GitHub 日本語アシストで追加）。<a>でaria-labelも
     // roleも無いため上のどれにも当たらない。中身は固定の「Fork」と件数だけ
     '#fork-button'
@@ -75,6 +79,9 @@
     'h5',
     'h6',
     'dt',
+    // 表の見出し（Branches 一覧の Ahead/Behind 等）。README 等の表は .markdown-body の除外で守られる
+    // （GitHub 日本語アシストで追加）
+    'th',
     'strong',
     'a',
     'input[placeholder]',
@@ -86,6 +93,15 @@
   // でのみ、そのページ限定で許可リスト側に回す。
   const EXCLUDE_SELECTOR_BASE = [
     '.markdown-body',
+    // リポジトリ名・所有者名などの構造化データ（リポジトリ上部の owner/repo 表記など）。
+    // 学習モードで見出しやリンクまで走査するようにしたため追加（GitHub 日本語アシストで追加）
+    '[itemprop="name"]',
+    '[itemprop="author"]',
+    '[itemprop="additionalName"]',
+    // 差分の表。展開ボタンのツールチップ（"Expand Up" 等）も含めて一切触らない。
+    // [role="tooltip"] を走査対象に足したとき、日本語優先モードで差分の表の文字が変わった
+    // （live テストで検出。GitHub 日本語アシストで追加）
+    'table.diff-table',
     'pre',
     'code',
     'bdi',
@@ -434,7 +450,11 @@
   }
 
   function getAllowlistSelector() {
-    const isExtendedScopePage =
+    // 学習モードは文字を書き換えず小さな日本語を添えるだけなので、見出し・リンク・ラベル等まで
+    // すべてのページで走査する（誤って当たってもユーザーの文字の横に訳が付くだけ）。
+    // 文字を置き換える日本語優先モードは、上流が画面ごとに確かめた範囲だけにとどめる
+    // （GitHub 日本語アシストで追加）
+    const isExtendedScopePage = displayMode === 'learn' ||
       /\/settings(\/|$)/.test(location.pathname) ||
       /^\/orgs\/[^/]+\/(people|teams|security-managers|packages|sponsoring|repositories|actions)(\/|$)/.test(location.pathname) ||
       // GitHub Sponsorsのダッシュボード（/sponsors/<user>/dashboard 配下）。見出し・
@@ -456,7 +476,11 @@
       /^\/issues(\/|$)/.test(location.pathname) ||
       // グローバルなリポジトリ一覧（/repos）。ページタイトル（h1）や
       // 「New repository」等のPrimer Buttonクラス付き<a>タグが対象になる
-      /^\/repos(\/|$)/.test(location.pathname);
+      /^\/repos(\/|$)/.test(location.pathname) ||
+      // ログイン後のホーム（ダッシュボード）。見出し（Home / Top repositories / Feed）や
+      // <a> のボタン（New）が nav/button の外にある。リポジトリ名・ユーザー名はホバーカードの
+      // 除外で守られる（GitHub 日本語アシストで追加）
+      /^\/(dashboard)?$/.test(location.pathname);
 
     const selector = isExtendedScopePage
       ? BASE_SELECTOR.concat(EXTRA_SELECTOR)
@@ -484,11 +508,19 @@
     if (link.closest(FIXED_TAB_NAV)) return false;
 
     let path;
+    let query;
     try {
-      path = new URL(link.getAttribute('href'), location.href).pathname;
+      const url = new URL(link.getAttribute('href'), location.href);
+      path = url.pathname;
+      query = url.searchParams.get('q') || '';
     } catch {
       return false;
     }
+
+    // ラベル・マイルストーン・作成者などで絞り込むリンク（?q=label:"firefox" 等）。表示はラベル名や
+    // その説明（読み上げ用に隠れた span）など、ユーザーが付けたもの（GitHub 日本語アシストで追加。
+    // Issue 詳細の LabelsList や PR の IssueLabel は上流の除外に当たっていなかった）
+    if (/\b(label|milestone|author|assignee|project):/.test(query)) return true;
 
     return /^\/[^/]+\/[^/]+\/(issues|pull|discussions)\/\d+(\/|$)/.test(path) ||
       // リポジトリ固有の保存済みIssueビュー一覧（/issues/views）に表示されるビュー名。
@@ -672,7 +704,7 @@
 
   // グロッサリーの意味訳を辞書の訳より優先する
   function lookup(dict, text) {
-    return glossaryTerms[text]?.ja || dict[text];
+    return glossaryTerms[text]?.ja || extraLabels[text] || dict[text];
   }
 
   // shown: 小さく添える文字列、displayed: 画面に表示されている文字列（同じなら添えない）
@@ -680,14 +712,18 @@
     const el = textNode.parentElement;
     if (!el) return;
     const limit = displayMode === 'ja' ? MAX_INLINE_SOURCE : MAX_INLINE_LABEL;
-    const inline = shown !== displayed && shown.length <= limit ? shown : null;
-    annotationQueue.push({ el, textNode, src, inline, tip: Boolean(glossaryTerms[src]?.description) });
+    // 学習モードで長い日本語は、英語の横ではなく下の行に折り返して出す（見えないままにしない）。
+    // 日本語優先モードの長い英語（説明文）はツールチップだけ
+    const long = displayMode === 'learn' && shown.length > limit;
+    const inline = shown !== displayed && (shown.length <= limit || long) ? shown : null;
+    annotationQueue.push({ el, textNode, src, inline, long, tip: Boolean(glossaryTerms[src]?.description) });
   }
 
   function removeAnnotation(el) {
     el.removeAttribute('data-ghja-src');
     el.removeAttribute('data-ghja');
     el.removeAttribute('data-ghja-tip');
+    el.removeAttribute('data-ghja-block');
     annotationOwner.delete(el);
   }
 
@@ -733,12 +769,62 @@
         el.setAttribute(name, value);
       }
     };
-    for (const { el, textNode, src, inline, tip } of items) {
+    for (const { el, textNode, src, inline, long, tip } of items) {
+      // 長い訳を下の行に出すとボタンの高さが崩れるので、ボタンの中ではツールチップだけにする
+      const shown = inlineBlocked.has(el) || (long && el.closest('button, summary, [role="button"]')) ? null : inline;
       annotationOwner.set(el, textNode);
       setAttr(el, 'data-ghja-src', src);
-      setAttr(el, 'data-ghja', inlineBlocked.has(el) ? null : inline);
+      setAttr(el, 'data-ghja', shown);
+      setAttr(el, 'data-ghja-block', shown && long ? '' : null);
       setAttr(el, 'data-ghja-tip', tip ? '' : null);
     }
+  }
+
+  // 画面に見えているのに日本語が付いていない文言を集める（ポップアップの報告用）。
+  // 読み取るだけで、どこにも送らない。固定UIが出やすい要素に限り、上流の除外（ユーザー作成内容）も通す。
+  // ログイン後の画面は開発側から見られないため、利用者が見ている画面の不足をそのまま辞書に足せるようにする
+  const REPORT_SCOPE = 'a, button, summary, label, legend, h1, h2, h3, h4, h5, h6, th, dt, nav, header, ' +
+    '[role="tab"], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="option"], ' +
+    '[role="button"], [role="tooltip"], [role="dialog"]';
+
+  function describeElement(el) {
+    const parts = [];
+    for (let e = el; e && e !== document.body && parts.length < 4; e = e.parentElement) {
+      const role = e.getAttribute('role');
+      parts.push(e.tagName.toLowerCase() + (role ? `[role=${role}]` : '') + (e.id ? `#${e.id}` : ''));
+    }
+    return parts.join(' < ');
+  }
+
+  function collectUntranslated(dict) {
+    const missing = new Map();
+    let annotated = 0;
+    const note = (text, el, kind) => {
+      if (!missing.has(text)) missing.set(text, `${kind}: ${describeElement(el)}`);
+    };
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const el = node.parentElement;
+      const text = node.nodeValue.replace(/\s+/g, ' ').trim();
+      if (!el || text.length < 2 || text.length > 80 || !/[A-Za-z]{2}/.test(text)) continue;
+      if (el.getAttribute('data-ghja-src') === text) {
+        annotated += 1;
+        continue;
+      }
+      if (!el.closest(REPORT_SCOPE) || isExcludedElement(el)) continue;
+      // 見えないもの（読み上げ専用の 1px の見出しなど）と、トピックのタグ（ユーザーが選ぶ名前）は報告しない
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2 || el.closest('a[href*="/topics/"]')) continue;
+      // 訳はあるのに走査範囲の外で出ていないもの（not-shown）と、訳が無いもの（no-translation）を分ける
+      note(text, el, lookup(dict, text) ? 'not-shown' : 'no-translation');
+    }
+    for (const input of document.querySelectorAll('input[placeholder], textarea[placeholder]')) {
+      const text = input.getAttribute('placeholder').trim();
+      if (!/[A-Za-z]{2}/.test(text) || lookup(dict, text) || text.includes('（') || isExcludedElement(input)) continue;
+      if (input.getClientRects().length === 0) continue;
+      note(text, input, 'placeholder');
+    }
+    return { path: location.pathname, annotated, missing: [...missing].map(([text, where]) => ({ text, where })) };
   }
 
   function translateElement(el, dict) {
@@ -758,12 +844,16 @@
     }
 
     // placeholder属性もテキストノードではないため個別に処理する
+    // 学習モードでは placeholder は画面に見える唯一の文字なので、英語の後ろに日本語を足す
+    // （例: "Find a repository… （リポジトリを探す）"。一度足した後は辞書に当たらないので二重にならない）
     const placeholder = el.getAttribute('placeholder');
-    if (placeholder && displayMode === 'ja') {
+    if (placeholder) {
       const trimmed = placeholder.trim();
-      const translated = dict[trimmed];
+      const translated = lookup(dict, trimmed);
       if (translated) {
-        const replacement = placeholder.replace(trimmed, () => translated);
+        const replacement = displayMode === 'ja'
+          ? placeholder.replace(trimmed, () => translated)
+          : `${trimmed} （${translated}）`;
         if (replacement !== placeholder) el.setAttribute('placeholder', replacement);
       }
     }
@@ -879,13 +969,17 @@
     if (Object.keys(dict).length === 0) return;
     if (language === 'ja') {
       try {
-        glossaryTerms = (await globalThis.GitHubUITranslator.loadGlossary()).terms;
+        ({ terms: glossaryTerms, labels: extraLabels } = await globalThis.GitHubUITranslator.loadGlossary());
       } catch (e) {
         console.error('[GitHub UI Translator] グロッサリーの読み込みに失敗しました', e);
       }
     }
     // assist.js のツールチップが、辞書だけにある語の訳も引けるようにする
     globalThis.GitHubUITranslator.lookup = (text) => lookup(dict, text);
+    // ポップアップの「日本語が付いていない文言をコピー」から呼ばれる。拡張自身のページ以外からは呼べない
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message?.type === 'ghja:collect-untranslated') sendResponse(collectUntranslated(dict));
+    });
 
     // SPA対応: GitHubの動的DOM更新に追従する
     // 自分の書き込みもcharacterDataミューテーションとして観測されるため、再走査が

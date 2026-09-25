@@ -95,5 +95,22 @@
         "content": "$1"
       }
     }
+  },
+  "reportButton": {
+    "message": "このページで日本語が付いていない文言をコピー"
+  },
+  "reportNote": {
+    "message": "画面に見えているのに日本語が付いていない文言を集めてコピーします。開発者に送ってください（送る前に中身を確認してください）。"
+  },
+  "reportCopied": {
+    "message": "$COUNT$ 件コピーしました。メッセージに貼り付けてください。",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "reportUnavailable": {
+    "message": "GitHub のページを開いてから（日本語アシストを ON、表示モードを「英語のみ」以外にして）もう一度押してください。"
   }
 }

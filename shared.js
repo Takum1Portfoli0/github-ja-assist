@@ -32,7 +32,11 @@
           terms[name] = { src: key, ja: term.ja, description: term.description };
         }
       }
-      return { terms, pages: Object.assign(Object.create(null), data.pages) };
+      return {
+        terms,
+        pages: Object.assign(Object.create(null), data.pages),
+        labels: Object.assign(Object.create(null), data.labels)
+      };
     })();
     return glossaryPromise;
   }

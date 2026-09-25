@@ -272,7 +272,12 @@ describe('themes, zoom and narrow screens', () => {
         const ext = await measure(mode);
         console.log(`${label}: baseline ${JSON.stringify(base)}, ${mode} ${JSON.stringify(ext)}`);
         assert.ok(ext.overflow <= Math.max(base.overflow, 0), `${mode}: no new horizontal scroll`);
-        assert.ok(ext.tabs >= base.tabs, `${mode}: visible repository tabs ${ext.tabs} vs ${base.tabs}`);
+        // 学習モードは英語を残して下に小さく足すだけなので、見えるタブの数は元と同じでなければならない。
+        // 日本語優先モードは上流と同じくラベル自体を日本語に置き換えるため文字幅が広がり（例: Pull requests
+        // 121px → 変更の取り込み依頼 166px）、狭い幅では GitHub 自身が1つを「…」メニューへ移すことがある。
+        // タブが消えるわけではないので、そのモードに限り1つまで許す（README の既知の制限に記載）
+        const allowed = mode === 'ja' ? 1 : 0;
+        assert.ok(ext.tabs >= base.tabs - allowed, `${mode}: visible repository tabs ${ext.tabs} vs ${base.tabs}`);
       }
     });
   }
