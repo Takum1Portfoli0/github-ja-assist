@@ -36,8 +36,11 @@
   // - ヘッダー内の flex/grid 要素。::after が横並びの項目になり英語の下に重ねられず、
   //   ヘッダーが画面幅からはみ出す（1280px の日本語優先モードで 28px はみ出した）
   const inlineBlocked = new WeakSet();
+  // 学習モードでだけ走査する要素。GitHub 自身のツールチップ（アイコンだけのボタンの名前）と表の見出し
+  const LEARN_ONLY_SELECTOR = ['[role="tooltip"]', 'th'];
   // 固定の項目しか並ばないタブ列（isUserContentLink を参照）
-  const FIXED_TAB_NAV = 'nav[aria-label="Repository"], nav[aria-label="Pull request tabs"], nav[aria-label="Pull request navigation"]';
+  const FIXED_TAB_NAV = 'nav[aria-label="Repository"], nav[aria-label="Pull request tabs"], nav[aria-label="Pull request navigation"], ' +
+    'nav[aria-label="User profile"], nav[aria-label="Organization"]';
 
   const BASE_SELECTOR = [
     'nav',
@@ -55,8 +58,6 @@
     '[role="listbox"]',
     '[role="button"]',
     '[aria-label]',
-    // GitHub 自身のツールチップ（アイコンだけのボタンの名前が出る）。GitHub 日本語アシストで追加
-    '[role="tooltip"]',
     // リポジトリ右上のForkボタン（GitHub 日本語アシストで追加）。<a>でaria-labelも
     // roleも無いため上のどれにも当たらない。中身は固定の「Fork」と件数だけ
     '#fork-button'
@@ -79,9 +80,6 @@
     'h5',
     'h6',
     'dt',
-    // 表の見出し（Branches 一覧の Ahead/Behind 等）。README 等の表は .markdown-body の除外で守られる
-    // （GitHub 日本語アシストで追加）
-    'th',
     'strong',
     'a',
     'input[placeholder]',
@@ -95,9 +93,12 @@
     '.markdown-body',
     // リポジトリ名・所有者名などの構造化データ（リポジトリ上部の owner/repo 表記など）。
     // 学習モードで見出しやリンクまで走査するようにしたため追加（GitHub 日本語アシストで追加）
-    '[itemprop="name"]',
-    '[itemprop="author"]',
-    '[itemprop="additionalName"]',
+    // itemprop は "name codeRepository" のように複数の値を持つので単語一致で見る
+    '[itemprop~="name"]',
+    '[itemprop~="author"]',
+    '[itemprop~="additionalName"]',
+    // 検索結果で一致した語の強調（リポジトリ名・説明文の中）
+    '.search-match',
     // 差分の表。展開ボタンのツールチップ（"Expand Up" 等）も含めて一切触らない。
     // [role="tooltip"] を走査対象に足したとき、日本語優先モードで差分の表の文字が変わった
     // （live テストで検出。GitHub 日本語アシストで追加）
@@ -476,15 +477,13 @@
       /^\/issues(\/|$)/.test(location.pathname) ||
       // グローバルなリポジトリ一覧（/repos）。ページタイトル（h1）や
       // 「New repository」等のPrimer Buttonクラス付き<a>タグが対象になる
-      /^\/repos(\/|$)/.test(location.pathname) ||
-      // ログイン後のホーム（ダッシュボード）。見出し（Home / Top repositories / Feed）や
-      // <a> のボタン（New）が nav/button の外にある。リポジトリ名・ユーザー名はホバーカードの
-      // 除外で守られる（GitHub 日本語アシストで追加）
-      /^\/(dashboard)?$/.test(location.pathname);
+      /^\/repos(\/|$)/.test(location.pathname);
 
     const selector = isExtendedScopePage
       ? BASE_SELECTOR.concat(EXTRA_SELECTOR)
       : BASE_SELECTOR.slice();
+    // 学習モードだけの追加（GitHub 日本語アシストで追加）。文字を置き換える日本語優先モードには広げない
+    if (displayMode === 'learn') selector.push(...LEARN_ONLY_SELECTOR);
 
     return selector.concat(getPathExtraSelector()).join(',');
   }
@@ -509,18 +508,42 @@
 
     let path;
     let query;
+    let sameHost;
     try {
       const url = new URL(link.getAttribute('href'), location.href);
       path = url.pathname;
       query = url.searchParams.get('q') || '';
+      sameHost = url.host === location.host;
     } catch {
       return false;
     }
 
     // ラベル・マイルストーン・作成者などで絞り込むリンク（?q=label:"firefox" 等）。表示はラベル名や
     // その説明（読み上げ用に隠れた span）など、ユーザーが付けたもの（GitHub 日本語アシストで追加。
-    // Issue 詳細の LabelsList や PR の IssueLabel は上流の除外に当たっていなかった）
-    if (/\b(label|milestone|author|assignee|project):/.test(query)) return true;
+    // Issue 詳細の LabelsList や PR の IssueLabel は上流の除外に当たっていなかった）。
+    // 自分で絞り込む固定のリンク（author:@me 等）は除く
+    if (/\b(label|milestone|project):|\b(author|assignee):(?!@me\b)/.test(query)) return true;
+
+    // /owner や /owner/repo へのリンクで、表示がその名前そのもの（リポジトリ一覧・検索結果・パンくず）。
+    // React の一覧や検索結果にはホバーカードの目印が無いので URL と表示の対応で判定する。
+    // 表示が名前を含まない固定のリンク（ユーザーメニューの "Your profile" → /自分 など）、
+    // GitHub 自身のページ（/pricing、/features/… 等）、ページ内リンク（#readme-ov-file 等）は除く
+    // （GitHub 日本語アシストで追加。学習モードでリンク全体を走査するようにしたため）
+    const segments = path.split('/').filter(Boolean);
+    if (sameHost && !link.getAttribute('href').startsWith('#') && (segments.length === 1 || segments.length === 2) &&
+        !globalThis.GitHubUITranslator.isReservedTopLevel(segments[0])) {
+      const shown = link.textContent.toLowerCase();
+      const decode = (segment) => {
+        try {
+          return decodeURIComponent(segment);
+        } catch {
+          return segment;
+        }
+      };
+      if (segments.some((segment) => shown.includes(decode(segment).toLowerCase()))) return true;
+    }
+    // トピック（/topics/…）はユーザーが選んで付ける名前
+    if (/^\/topics\/[^/]+/.test(path)) return true;
 
     return /^\/[^/]+\/[^/]+\/(issues|pull|discussions)\/\d+(\/|$)/.test(path) ||
       // リポジトリ固有の保存済みIssueビュー一覧（/issues/views）に表示されるビュー名。
@@ -824,7 +847,11 @@
       if (input.getClientRects().length === 0) continue;
       note(text, input, 'placeholder');
     }
-    return { path: location.pathname, annotated, missing: [...missing].map(([text, where]) => ({ text, where })) };
+    // 実際のパス（非公開リポジトリの名前を含みうる）ではなく、GitHub 自身が名前を伏せて載せている
+    // ページの種類（"/<user-name>/<repo-name>/issues" 等）を使う。無ければ先頭 2 つを伏せる
+    const pageType = document.querySelector('meta[name="analytics-location"]')?.content ||
+      location.pathname.split('/').map((s, i) => (i > 0 && i < 3 && s ? '*' : s)).join('/');
+    return { path: pageType, annotated, missing: [...missing].map(([text, where]) => ({ text, where })) };
   }
 
   function translateElement(el, dict) {
@@ -961,7 +988,10 @@
 
   (async () => {
     const { enabled, language, translateGlobalHeader: globalHeaderEnabled, mode } = await getSettings();
-    if (!enabled || mode === 'original') return;
+    if (!enabled || mode === 'original') {
+      document.documentElement.setAttribute('data-ghja-ready', 'off');
+      return;
+    }
     translateGlobalHeader = globalHeaderEnabled;
     displayMode = mode === 'ja' ? 'ja' : 'learn';
 
@@ -1071,6 +1101,8 @@
     // 初回翻訳の時点で既に存在するhydration待ちパーシャルにも監視を張る
     watchPendingPartials(document.body);
     translateAll(document.body, dict);
+    // 初回の走査が終わった目印（テストが固定の待ち時間ではなくこれを待つ。GitHub 日本語アシストで追加）
+    document.documentElement.setAttribute('data-ghja-ready', displayMode);
 
     // ブラウザの「戻る/進む」でbfcacheからページが復元された場合、
     // DOM変更を伴わないことがありMutationObserverだけでは検知できないため、

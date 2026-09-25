@@ -8,14 +8,14 @@ A Chrome extension that makes GitHub.com easier for Japanese speakers **without 
 
 ## Features
 
-- **Learning mode (default)**: `Pull requests` stays in English and gets a small "変更の取り込み依頼" under it. The Japanese is drawn with CSS `::after` and empty alt text, so GitHub's text, `aria-label`s and accessible names are unchanged, and no nodes are inserted into React-managed DOM.
+- **Learning mode (default)**: `Pull requests` stays in English and gets a small "変更の取り込み依頼" under it. The Japanese is drawn with CSS `::after` and empty alt text, so GitHub's text, `aria-label`s and accessible names are unchanged, and no nodes are inserted into React-managed DOM. The one exception is placeholder text: the Japanese is appended to it (`Find a repository… （リポジトリを検索）`), so an input whose accessible name comes from its placeholder is announced with the Japanese after the English.
 - **Japanese-first mode**: the upstream behaviour (text replaced with Japanese), with the English term kept as a small label (up to 40 characters; longer English, such as descriptions, appears in the tooltip).
 - **English-only mode**: GitHub unchanged; the page guide and body translation button remain available.
 - **Concept tooltips** on hover or keyboard focus, e.g. what a Fork, a Pull request or Actions actually is.
 - **Page guide**: a small panel naming the current page (Issues, Actions, Settings, …) with a one-line explanation.
 - **Body translation on request**: "本文を日本語で読む" uses Chrome's built-in Translator API (on device) and places each translation below its paragraph. Code blocks are never sent; inline code stays code. Unsupported browsers show the button as unsupported.
-- **Report missing Japanese**: the popup button "このページで日本語が付いていない文言をコピー" copies the visible labels on the current page that still have no Japanese (one per line, with where they are), so they can be added to the dictionary. It only copies to the clipboard; nothing is sent.
-- In learning mode, headings, links, table headers and placeholders are annotated on every page (text is never rewritten, so a false match only adds a label). Japanese-first mode, which rewrites text, keeps upstream's per-page scope.
+- **Report missing Japanese**: the popup button "このページで日本語が付いていない文言をコピー" copies the visible labels on the current page that still have no Japanese (one per line, with where they are) and the page type as GitHub itself records it with names hidden (e.g. `/<user-name>/<repo-name>/issues`), so they can be added to the dictionary. It only copies to the clipboard; nothing is sent. The same exclusions as the annotations apply, but page text can still slip in, so check it before sending.
+- In learning mode, headings, links, table headers, GitHub's own tooltips and placeholders are annotated on every page (text is never rewritten, so a false match only adds a label). Japanese-first mode, which rewrites text, keeps upstream's per-page scope exactly. Links whose text is the user or repository name they point to (repository lists, search results), topic links and search highlights are treated as user content.
 - Never touched: code, diffs, file/directory/repository/user/branch names, tags, commit hashes, URLs, and user-written bodies unless you ask.
 
 ## Install (unpacked)

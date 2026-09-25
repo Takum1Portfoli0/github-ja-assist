@@ -53,6 +53,10 @@
     <a href="/octo/demo/settings"><span data-content="Settings">Settings</span></a>
   </nav>
 
+  <!-- 名前ではない固定のリンク（URL は /octo 等でも、表示は名前を含まない） -->
+  <nav aria-label="User profile" id="profile-tabs"><a href="/octo">Overview</a> <a href="/octo?tab=repositories">Repositories</a></nav>
+  <div id="user-menu"><a href="/octo" id="your-profile">Your profile</a> <a href="/octo/demo/issues?q=is%3Aissue%20author%3A%40me" id="my-issues">Your issues</a></div>
+  <a href="#readme-ov-file" id="readme-link">Readme</a>
   <!-- リポジトリ右側の About 欄（上流はこのページでは見出し・リンクを走査しない） -->
   <div id="about-sidebar"><h2 id="about-heading">About</h2><a href="/octo/demo/activity" id="activity-link">Activity</a></div>
   <nav aria-label="Pull request navigation" id="pr-nav"><div><a href="/octo/demo/pull/2/checks">Checks <span class="Counter">2</span></a></div></nav>
@@ -74,6 +78,11 @@
     <a href="/octo/demo/commit/0a1b2c3d4e5f" id="commit-link">Merge pull request</a>
     <nav><a href="/octo/demo/pull/5" id="pr-title-link">Files changed</a></nav>
     <nav><a href="/octo/demo/issues?q=state%3Aopen%20label%3A%22Settings%22" id="repo-label-link">Settings<span class="sr-only">Code</span></a></nav>
+    <!-- 実物の一覧・検索結果に近い形（ホバーカードの目印が無い） -->
+    <a href="/octo/Settings" itemprop="name codeRepository" id="repo-list-link">Settings</a>
+    <a href="/topics/settings" id="topic-link">Settings</a>
+    <a href="/sindresorhus/Settings" id="search-result">sindresorhus/<span class="search-match"><em>Settings</em></span></a>
+    <a href="/octo/Code" id="plain-repo-link">Code</a>
     <h1 class="gh-header-title"><bdi class="markdown-title">Pull requests</bdi></h1>
     <table class="diff-table" id="diff"><tr><td><button type="button" aria-labelledby="expand-tip">↕</button><span role="tooltip" id="expand-tip">Expand Up</span></td></tr><tr><td class="blob-code"><span class="blob-code-inner">+ Settings</span></td></tr><tr><td class="blob-code"><code>- Fork</code></td></tr></table>
     <pre id="code-block"><code>git clone https://github.com/octo/demo.git

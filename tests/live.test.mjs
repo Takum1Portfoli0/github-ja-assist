@@ -96,6 +96,29 @@ describe('learning mode on real GitHub pages', () => {
   });
 });
 
+describe('user content on real lists is never annotated', () => {
+  // 独立レビューが学習モードで見つけた例: 検索結果 /sindresorhus/Settings の <em>Settings</em> に「設定」が付いた
+  let browser;
+  before(async () => { browser = await launch(); });
+  after(() => browser.context.close());
+
+  for (const url of ['https://github.com/search?q=settings&type=repositories', 'https://github.com/octocat?tab=repositories']) {
+    test(url, async () => {
+      const page = await visit(browser.context, url);
+      // GitHub 自身がユーザー作成内容として印を付けている要素（リポジトリ一覧・検索結果の題名・トピック）
+      const { count, leaks } = await page.evaluate(() => {
+        const userLinks = [...document.querySelectorAll('a[itemprop~="codeRepository"], a[href^="/topics/"], a:has(.search-match)')];
+        const hit = userLinks.flatMap((a) => [a, ...a.querySelectorAll('*')]).filter((el) => el.hasAttribute('data-ghja-src'));
+        return { count: userLinks.length, leaks: hit.map((el) => `${el.getAttribute('data-ghja-src')} @ ${el.closest('a').getAttribute('href')}`) };
+      });
+      assert.ok(count > 3, `found ${count} user-content links (the check must not be vacuous)`);
+      assert.deepEqual(leaks, []);
+      assert.ok((await visibleAnnotations(page)).length > 5, 'the fixed UI on the page still gets Japanese');
+      await page.close();
+    });
+  }
+});
+
 describe('code, diff and README are never changed', () => {
   // 置き換えを行う「日本語優先」モードで、拡張なしの表示と一字一句比べる（最も厳しい条件）
   let plain;
@@ -273,8 +296,9 @@ describe('themes, zoom and narrow screens', () => {
         console.log(`${label}: baseline ${JSON.stringify(base)}, ${mode} ${JSON.stringify(ext)}`);
         assert.ok(ext.overflow <= Math.max(base.overflow, 0), `${mode}: no new horizontal scroll`);
         // 学習モードは英語を残して下に小さく足すだけなので、見えるタブの数は元と同じでなければならない。
-        // 日本語優先モードは上流と同じくラベル自体を日本語に置き換えるため文字幅が広がり（例: Pull requests
-        // 121px → 変更の取り込み依頼 166px）、狭い幅では GitHub 自身が1つを「…」メニューへ移すことがある。
+        // 日本語優先モードはラベル自体を日本語に置き換える。このフォークの意味を優先した訳は上流のカタカナより
+        // 長く（例: Pull requests 121px → 変更の取り込み依頼 166px。上流はプルリクエスト）、狭い幅では
+        // GitHub 自身が1つを「…」メニューへ移すことがある。
         // タブが消えるわけではないので、そのモードに限り1つまで許す（README の既知の制限に記載）
         const allowed = mode === 'ja' ? 1 : 0;
         assert.ok(ext.tabs >= base.tabs - allowed, `${mode}: visible repository tabs ${ext.tabs} vs ${base.tabs}`);

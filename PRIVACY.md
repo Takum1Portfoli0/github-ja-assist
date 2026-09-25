@@ -27,6 +27,12 @@ The small Japanese labels, the concept tooltips and the page guide come only fro
 - In browsers without the Translator API, the button is shown as unsupported and nothing is sent.
 - To label the button, the page asks the browser whether en→ja translation is available (`Translator.availability()`). No page content is passed.
 
+### "Copy untranslated text on this page"
+
+- Only when you press this popup button, the extension reads the page's visible UI labels that have no Japanese yet, with where they are (element types), and copies them to the clipboard.
+- It includes the page type in the form GitHub itself records with names hidden (e.g. `/<user-name>/<repo-name>/issues`), not the real address.
+- Code, bodies, repository names and user names are excluded, but other page text can slip in. Whether to send the copied text to anyone is your decision; the extension sends nothing.
+
 ### Settings stay in your browser
 
 All settings are stored locally with `chrome.storage.local` and are never transmitted:

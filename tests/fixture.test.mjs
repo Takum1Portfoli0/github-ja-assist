@@ -44,13 +44,16 @@ async function fixtureBrowser(options = {}) {
   return { context, extensionId, external };
 }
 
-async function open(context, pathname = '/octo/demo') {
+async function open(context, pathname = '/octo/demo', { extension = true } = {}) {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(BASE + pathname);
-  // 拡張の初回処理（辞書読み込み → 注釈）を待つ
-  await page.waitForTimeout(600);
+  if (extension) {
+    // content.js の初回の走査と assist.js の表示が終わるのを待つ（固定の待ち時間は負荷で足りなくなる）
+    await page.waitForFunction(() => document.documentElement.hasAttribute('data-ghja-ready') && document.querySelector('ghja-assist'));
+    await page.waitForTimeout(150);
+  }
   page.extensionErrors = errors;
   return page;
 }
@@ -70,7 +73,7 @@ const navTexts = (page) => page.$$eval('#repo-nav a > span[data-content]', (els)
 let baseline;
 before(async () => {
   const { context } = await fixtureBrowser({ extension: false });
-  const page = await open(context);
+  const page = await open(context, '/octo/demo', { extension: false });
   baseline = {
     ...(await snapshot(page)),
     navAria: await page.locator('#repo-nav').ariaSnapshot(),
@@ -111,6 +114,11 @@ describe('learning mode (default)', () => {
     assert.deepEqual(await page.$$eval('#pr-tabs [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Conversation', 'Files changed']);
     assert.deepEqual(await page.$$eval('#pr-nav [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Checks']);
     assert.equal(await page.$eval('#pr-title-link', (el) => el.hasAttribute('data-ghja-src')), false);
+  });
+
+  test('fixed links whose URL is a profile or repository still get Japanese when the text is not a name', async () => {
+    const got = await page.$$eval('#profile-tabs a, #your-profile, #my-issues, #readme-link', (els) => els.map((el) => el.getAttribute('data-ghja-src')));
+    assert.deepEqual(got, ['Overview', 'Repositories', 'Your profile', 'Your issues', 'Readme']);
   });
 
   test('learning mode also reaches headings and links that upstream only scans on some pages', async () => {
@@ -369,6 +377,8 @@ describe('logged-in dashboard (coverage)', () => {
       `Find a repository… （${glossary.labels['Find a repository…']}）`,
       `Ask anything or type @ to add context （${glossary.labels['Ask anything or type @ to add context']}）`
     ]);
+    // 案内文がそのまま入力欄の読み上げ名になっている欄では、読み上げにも日本語が加わる（英語が先頭。README に記載）
+    assert.match(await page.locator('#your-repos-filter').ariaSnapshot(), /textbox "Find a repository… （リポジトリを検索）"/);
     // 同じ範囲を再走査させても二重に付かない
     await page.evaluate(() => { document.querySelector('#top-repos').firstChild.nodeValue = 'Top repositories'; });
     await page.waitForTimeout(200);
@@ -383,7 +393,7 @@ describe('logged-in dashboard (coverage)', () => {
   });
 
   test('repository names, feed descriptions and label links stay untouched', async () => {
-    const touched = await page.$$eval('#repo-list [data-ghja-src], #feed-repo[data-ghja-src], #feed-desc[data-ghja-src], #label-link [data-ghja-src], #label-link[data-ghja-src]', (els) => els.map((el) => el.outerHTML));
+    const touched = await page.$$eval('#repo-list [data-ghja-src], #repo-list[data-ghja-src], #plain-home-repo[data-ghja-src], #feed-repo[data-ghja-src], #feed-desc[data-ghja-src], #label-link [data-ghja-src], #label-link[data-ghja-src]', (els) => els.map((el) => el.outerHTML));
     assert.deepEqual(touched, []);
   });
 
@@ -405,7 +415,39 @@ describe('logged-in dashboard (coverage)', () => {
       assert.ok(!texts.includes(translated), `${translated} already has Japanese`);
     }
     assert.ok(result.annotated > 10);
+    // 実際のパスではなく、GitHub が名前を伏せて載せているページの種類
+    assert.equal(result.path, '/dashboard');
     assert.deepEqual(browser.external, []);
+  });
+});
+
+describe('logged-in dashboard in Japanese-first mode stays within upstream scope', () => {
+  test('buttons are translated; headings, tooltips, repository names and placeholders are not touched', async () => {
+    const browser = await fixtureBrowser();
+    try {
+      await setSettings(browser.context, browser.extensionId, { mode: 'ja' });
+      const page = await open(browser.context, '/');
+      const state = await page.evaluate(() => ({
+        debug: document.querySelector('#debug-label').textContent,
+        home: document.querySelector('#home-title').textContent,
+        top: document.querySelector('#top-repos').textContent,
+        seeMore: document.querySelector('#see-more').textContent,
+        tooltip: document.querySelector('#copilot-tip').textContent,
+        placeholder: document.querySelector('#your-repos-filter').placeholder,
+        repos: [...document.querySelectorAll('#repo-list a')].map((a) => a.textContent)
+      }));
+      assert.deepEqual(state, {
+        debug: 'デバッグ',
+        home: 'Home',
+        top: 'Top repositories',
+        seeMore: 'See more',
+        tooltip: 'Chat with Copilot',
+        placeholder: 'Find a repository…',
+        repos: ['Takum1Portfoli0/Portfolio', 'octo/Feed', 'octo/Home']
+      });
+    } finally {
+      await browser.context.close();
+    }
   });
 });
 

@@ -100,7 +100,7 @@
     "message": "Copy untranslated text on this page"
   },
   "reportNote": {
-    "message": "Copies the visible labels that still have no Japanese, so you can send them to the developer. Check the copied text before sending it."
+    "message": "Copies the visible labels that still have no Japanese and the page type (names hidden, e.g. /<user-name>/<repo-name>/issues). Nothing is sent. Page text can slip in, so check it before sending it to the developer."
   },
   "reportCopied": {
     "message": "Copied $COUNT$ items. Paste them into your message.",

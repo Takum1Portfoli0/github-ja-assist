@@ -41,6 +41,22 @@
     return glossaryPromise;
   }
 
+  // /owner や /owner/repo の形に見えるが、ユーザーやリポジトリではない GitHub 自身のページの先頭部分。
+  // 漏れても「その固定リンクに日本語が付かない」だけで、安全側に倒れる
+  const RESERVED_TOP_LEVEL = new Set([
+    'about', 'account', 'achievements', 'advisories', 'apps', 'codespaces', 'collections', 'contact',
+    'copilot', 'customer-stories', 'dashboard', 'discussions', 'enterprise', 'enterprises', 'events',
+    'explore', 'features', 'github-copilot', 'home', 'issues', 'join', 'login', 'logout', 'marketplace',
+    'mcp', 'mobile', 'models', 'new', 'newsroom', 'notifications', 'organizations', 'orgs', 'partners',
+    'password_reset', 'premium-support', 'pricing', 'pulls', 'readme', 'repos', 'resources', 'search',
+    'security', 'sessions', 'settings', 'signup', 'site', 'solutions', 'sponsors', 'stars', 'team',
+    'topics', 'trending', 'users', 'watching', 'why-github'
+  ]);
+
+  function isReservedTopLevel(segment) {
+    return RESERVED_TOP_LEVEL.has(String(segment).toLowerCase());
+  }
+
   function getMessage(key, substitutions) {
     return chrome.i18n.getMessage(key, substitutions) || key;
   }
@@ -59,6 +75,7 @@
 
   globalThis.GitHubUITranslator = {
     getMessage,
+    isReservedTopLevel,
     loadGlossary,
     loadLanguages,
     localizeDocument,

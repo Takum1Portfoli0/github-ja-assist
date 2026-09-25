@@ -5,7 +5,7 @@
 // - 本文翻訳はボタンを押したときだけ、Chrome内蔵の Translator API（端末内処理）で行う。
 //   外部へは何も送らない。APIが無い・使えない環境では非対応と表示するだけ
 (() => {
-  const { loadGlossary } = globalThis.GitHubUITranslator;
+  const { isReservedTopLevel, loadGlossary } = globalThis.GitHubUITranslator;
   const { collectBlocks, removeTranslations, translateBodies } = globalThis.GitHubJaContentTranslate;
 
   const DEFAULTS = {
@@ -52,14 +52,6 @@
     [/^\/wiki(\/|$)/, 'wiki'],
     [/^\/fork$/, 'fork']
   ];
-  // /owner/repo 形式に見えるが、リポジトリではないGitHub自身のページ
-  const RESERVED = new Set([
-    'about', 'account', 'apps', 'codespaces', 'collections', 'contact', 'copilot', 'customer-stories',
-    'dashboard', 'enterprise', 'events', 'explore', 'features', 'home', 'issues', 'join', 'login',
-    'marketplace', 'mobile', 'models', 'new', 'notifications', 'organizations', 'orgs', 'pricing',
-    'pulls', 'readme', 'repos', 'resources', 'search', 'security', 'sessions', 'settings', 'signup',
-    'site', 'solutions', 'sponsors', 'stars', 'team', 'topics', 'trending', 'users', 'watching'
-  ]);
   // README・Issue・PR等の本文が出うるページ（本文翻訳ボタンを出す）
   const BODY_PAGES = new Set(['code', 'file', 'issue', 'pull', 'releases', 'discussions', 'wiki', 'profile', 'org']);
 
@@ -70,7 +62,7 @@
     if (path === '/') return document.body?.classList.contains('logged-in') ? 'dashboard' : null;
     for (const [pattern, key] of SITE_PAGES) if (pattern.test(path)) return key;
     const segments = path.split('/').filter(Boolean);
-    if (RESERVED.has(segments[0].toLowerCase())) return null;
+    if (isReservedTopLevel(segments[0])) return null;
     // GitHubがページ種別を載せている meta（例: "/<user-name>/<repo-name>/issues"）
     const analyticsLocation = document.querySelector('meta[name="analytics-location"]')?.content || '';
     if (segments.length === 1) {
