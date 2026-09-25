@@ -540,7 +540,9 @@
     if (!isFragment) {
       const values = [...query.matchAll(/\b(?:label|milestone|project|author|assignee):(?:"([^"]+)"|(\S+))/g)]
         .map((m) => (m[1] || m[2]).toLowerCase())
-        .filter((value) => value !== '@me');
+        .filter((value) => value !== '@me')
+        // ボットの作成者は author:app/名前 だが、表示は名前だけ
+        .map((value) => value.replace(/^app\//, ''));
       // 語単位で見る（部分一致だと label:bug で "Debug" の固定リンクまで落ちる）
       if (values.some(showsWords)) return true;
     }
