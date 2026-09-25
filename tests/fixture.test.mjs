@@ -117,8 +117,19 @@ describe('learning mode (default)', () => {
   });
 
   test('fixed links whose URL is a profile or repository still get Japanese when the text is not a name', async () => {
-    const got = await page.$$eval('#profile-tabs a, #your-profile, #my-issues, #readme-link', (els) => els.map((el) => el.getAttribute('data-ghja-src')));
-    assert.deepEqual(got, ['Overview', 'Repositories', 'Your profile', 'Your issues', 'Readme']);
+    const got = await page.$$eval('#profile-tabs a, #your-profile, #my-issues, #readme-link, #oss-sponsors, #short-login', (els) => els.map((el) => el.getAttribute('data-ghja-src')));
+    assert.deepEqual(got, ['Overview', 'Repositories', 'Your profile', 'Your issues', 'Readme', 'GitHub Sponsors', 'Your profile']);
+  });
+
+  test('on a page filtered by a label, fixed links and #anchors keep their Japanese; the label itself does not get any', async () => {
+    const filtered = await open(browser.context, '/octo/demo/issues?q=is%3Aopen%20label%3Abug');
+    const got = await filtered.evaluate(() => ({
+      closed: document.querySelector('#closed-filter').getAttribute('data-ghja-src'),
+      skip: document.querySelector('#skip-link').getAttribute('data-ghja-src'),
+      label: document.querySelector('#repo-label-link').hasAttribute('data-ghja-src')
+    }));
+    assert.deepEqual(got, { closed: 'Closed', skip: 'Skip to content', label: false });
+    await filtered.close();
   });
 
   test('learning mode also reaches headings and links that upstream only scans on some pages', async () => {

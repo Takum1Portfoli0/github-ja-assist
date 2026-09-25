@@ -518,21 +518,34 @@
       return false;
     }
 
-    // ラベル・マイルストーン・作成者などで絞り込むリンク（?q=label:"firefox" 等）。表示はラベル名や
-    // その説明（読み上げ用に隠れた span）など、ユーザーが付けたもの（GitHub 日本語アシストで追加。
-    // Issue 詳細の LabelsList や PR の IssueLabel は上流の除外に当たっていなかった）。
-    // 自分で絞り込む固定のリンク（author:@me 等）は除く
-    if (/\b(label|milestone|project):|\b(author|assignee):(?!@me\b)/.test(query)) return true;
+    // ここから下の3つの判定は GitHub 日本語アシストで追加。ページ内リンク（#…）は今いるページの
+    // パスと ?q= を引き継ぐだけなので、リンク先の中身を表さない。これらの判定には使わない
+    const href = link.getAttribute('href');
+    const isFragment = href.startsWith('#');
+    const shownText = link.textContent.toLowerCase();
+
+    // ラベル・マイルストーン・作成者などで絞り込むリンク（?q=label:"firefox" 等）のうち、表示に
+    // その値（ラベル名など、ユーザーが付けたもの）を含むもの。Issue 詳細の LabelsList や PR の
+    // IssueLabel（読み上げ用に隠れた説明の span を含む）は上流の除外に当たっていなかった。
+    // 値を含まない固定のリンク（絞り込み中のページの "Open" / "Closed" など）と、自分で絞り込む
+    // author:@me 等は除く
+    if (!isFragment) {
+      const values = [...query.matchAll(/\b(?:label|milestone|project|author|assignee):(?:"([^"]+)"|(\S+))/g)]
+        .map((m) => (m[1] || m[2]).toLowerCase())
+        .filter((value) => value !== '@me');
+      if (values.some((value) => shownText.includes(value))) return true;
+    }
 
     // /owner や /owner/repo へのリンクで、表示がその名前そのもの（リポジトリ一覧・検索結果・パンくず）。
     // React の一覧や検索結果にはホバーカードの目印が無いので URL と表示の対応で判定する。
     // 表示が名前を含まない固定のリンク（ユーザーメニューの "Your profile" → /自分 など）、
     // GitHub 自身のページ（/pricing、/features/… 等）、ページ内リンク（#readme-ov-file 等）は除く
     // （GitHub 日本語アシストで追加。学習モードでリンク全体を走査するようにしたため）
+    // 名前との対応は語単位で見る（部分一致だと、短いユーザー名 "our" が "Your profile" に当たる）
     const segments = path.split('/').filter(Boolean);
-    if (sameHost && !link.getAttribute('href').startsWith('#') && (segments.length === 1 || segments.length === 2) &&
+    if (sameHost && !isFragment && (segments.length === 1 || segments.length === 2) &&
         !globalThis.GitHubUITranslator.isReservedTopLevel(segments[0])) {
-      const shown = link.textContent.toLowerCase();
+      const words = shownText.split(/[\s/]+/).filter(Boolean);
       const decode = (segment) => {
         try {
           return decodeURIComponent(segment);
@@ -540,10 +553,10 @@
           return segment;
         }
       };
-      if (segments.some((segment) => shown.includes(decode(segment).toLowerCase()))) return true;
+      if (segments.some((segment) => words.includes(decode(segment).toLowerCase()))) return true;
     }
     // トピック（/topics/…）はユーザーが選んで付ける名前
-    if (/^\/topics\/[^/]+/.test(path)) return true;
+    if (!isFragment && /^\/topics\/[^/]+/.test(path)) return true;
 
     return /^\/[^/]+\/[^/]+\/(issues|pull|discussions)\/\d+(\/|$)/.test(path) ||
       // リポジトリ固有の保存済みIssueビュー一覧（/issues/views）に表示されるビュー名。
