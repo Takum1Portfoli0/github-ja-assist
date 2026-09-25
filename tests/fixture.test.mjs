@@ -126,10 +126,19 @@ describe('learning mode (default)', () => {
     const got = await filtered.evaluate(() => ({
       closed: document.querySelector('#closed-filter').getAttribute('data-ghja-src'),
       skip: document.querySelector('#skip-link').getAttribute('data-ghja-src'),
+      // "Debug" は label:bug の "bug" を部分的に含むが、語としては別
+      debug: document.querySelector('#debug-filter').getAttribute('data-ghja-src'),
       label: document.querySelector('#repo-label-link').hasAttribute('data-ghja-src')
     }));
-    assert.deepEqual(got, { closed: 'Closed', skip: 'Skip to content', label: false });
+    assert.deepEqual(got, { closed: 'Closed', skip: 'Skip to content', debug: 'Debug', label: false });
     await filtered.close();
+  });
+
+  test('on a topic page, #anchors keep their Japanese', async () => {
+    // ページ内リンクは今いるパス（/topics/…）を引き継ぐが、トピック名ではない
+    const topic = await open(browser.context, '/topics/settings');
+    assert.equal(await topic.$eval('#skip-link', (el) => el.getAttribute('data-ghja-src')), 'Skip to content');
+    await topic.close();
   });
 
   test('learning mode also reaches headings and links that upstream only scans on some pages', async () => {

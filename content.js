@@ -522,7 +522,15 @@
     // パスと ?q= を引き継ぐだけなので、リンク先の中身を表さない。これらの判定には使わない
     const href = link.getAttribute('href');
     const isFragment = href.startsWith('#');
-    const shownText = link.textContent.toLowerCase();
+    // 表示と値を語単位で比べる。表示は2通りの形で見る: そのまま連結した形（検索結果の強調で
+    // "nextai-" + <em>translator</em> と分かれた名前を1語に戻す）と、要素の境目を空白にした形
+    // （ラベル名 "firefox" と読み上げ用の説明の span が空白なしで並ぶのを別の語にする）
+    const toWords = (text) => ` ${text.toLowerCase().split(/[\s/]+/).filter(Boolean).join(' ')} `;
+    const pieces = [];
+    const walker = document.createTreeWalker(link, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) pieces.push(node.nodeValue);
+    const shownForms = [toWords(link.textContent), toWords(pieces.join(' '))];
+    const showsWords = (value) => shownForms.some((form) => form.includes(toWords(value)));
 
     // ラベル・マイルストーン・作成者などで絞り込むリンク（?q=label:"firefox" 等）のうち、表示に
     // その値（ラベル名など、ユーザーが付けたもの）を含むもの。Issue 詳細の LabelsList や PR の
@@ -533,7 +541,8 @@
       const values = [...query.matchAll(/\b(?:label|milestone|project|author|assignee):(?:"([^"]+)"|(\S+))/g)]
         .map((m) => (m[1] || m[2]).toLowerCase())
         .filter((value) => value !== '@me');
-      if (values.some((value) => shownText.includes(value))) return true;
+      // 語単位で見る（部分一致だと label:bug で "Debug" の固定リンクまで落ちる）
+      if (values.some(showsWords)) return true;
     }
 
     // /owner や /owner/repo へのリンクで、表示がその名前そのもの（リポジトリ一覧・検索結果・パンくず）。
@@ -545,7 +554,6 @@
     const segments = path.split('/').filter(Boolean);
     if (sameHost && !isFragment && (segments.length === 1 || segments.length === 2) &&
         !globalThis.GitHubUITranslator.isReservedTopLevel(segments[0])) {
-      const words = shownText.split(/[\s/]+/).filter(Boolean);
       const decode = (segment) => {
         try {
           return decodeURIComponent(segment);
@@ -553,7 +561,7 @@
           return segment;
         }
       };
-      if (segments.some((segment) => words.includes(decode(segment).toLowerCase()))) return true;
+      if (segments.some((segment) => showsWords(decode(segment)))) return true;
     }
     // トピック（/topics/…）はユーザーが選んで付ける名前
     if (!isFragment && /^\/topics\/[^/]+/.test(path)) return true;
