@@ -22,6 +22,8 @@ jobs:
         run: |
           node --check shared.js
           node --check content.js
+          node --check content-translate.js
+          node --check assist.js
           node --check popup.js
           node --check options.js
           node --check scripts/validate.mjs

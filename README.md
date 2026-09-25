@@ -1,147 +1,64 @@
-# GitHub UI Translator
+# GitHub Japanese Assist (development build)
 
-[English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko.md) | [Français](README.fr.md) | [Русский](README.ru.md)
+[English](README.md) | [日本語](README.ja.md)
 
-[![Latest Release](https://img.shields.io/github/v/release/nobuo-miura/github-ui-translator?label=Latest%20Release)](https://github.com/nobuo-miura/github-ui-translator/releases/latest)
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/igdplojdbbpfbedgoaokfcagpkofmngk?label=Chrome%20Web%20Store&logo=googlechrome)](https://chromewebstore.google.com/detail/github-ui-translator/igdplojdbbpfbedgoaokfcagpkofmngk)
-[![Microsoft Edge Add-ons](https://img.shields.io/badge/dynamic/json?label=Microsoft%20Edge%20Add-ons&logo=microsoftedge&query=%24.version&prefix=v&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Ffgjocjmjjghflobobinafkbkeildanoj)](https://microsoftedge.microsoft.com/addons/detail/fgjocjmjjghflobobinafkbkeildanoj)
-[![Firefox Add-ons](https://img.shields.io/amo/v/github-ui-translator?label=Firefox%20Add-ons&logo=firefoxbrowser)](https://addons.mozilla.org/firefox/addon/github-ui-translator/)
-[![Validation](https://github.com/nobuo-miura/github-ui-translator/actions/workflows/validate.yml/badge.svg)](https://github.com/nobuo-miura/github-ui-translator/actions/workflows/validate.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+A Chrome extension that makes GitHub.com easier for Japanese speakers **without hiding GitHub's English terms**. It adds small Japanese labels next to the English ones, concept tooltips, a page guide, and an opt-in, on-device translation of README / Issue / Pull request bodies.
 
-GitHub UI Translator is a browser extension for Chrome, Edge, and Firefox that translates GitHub's English UI into Japanese, Simplified Chinese, Spanish, German, Brazilian Portuguese, Korean, French, or Russian using a local dictionary.
-It does not rely on external translation APIs or cloud services; all translation runs locally in the browser.
-
-![Translation result for Japanese](docs/images/jp.jpeg)
-
-<details>
-<summary>Screenshots (all 8 languages)</summary>
-
-The first row is GitHub's original English UI; each row below shows the translation for one language.
-
-![Translation results for all 8 supported languages](docs/images/languages.png)
-
-</details>
+![Repository page with small Japanese labels under and beside the English ones](docs/images/learn-light.png)
 
 ## Features
 
-- Performs all translation locally without sending page content or settings to external services
-- Translates fixed GitHub UI text such as navigation items and buttons while avoiding user-created content areas such as READMEs, issues, comments, and code blocks
-- Lets you turn translation on or off from the extension popup
-- Translates the global header after GitHub's React hydration completes to reduce the risk of interfering with the global search; this can be turned off from the popup
+- **Learning mode (default)**: `Pull requests` stays in English and gets a small "変更の取り込み依頼" under it. The Japanese is drawn with CSS `::after` and empty alt text, so GitHub's text, `aria-label`s and accessible names are unchanged, and no nodes are inserted into React-managed DOM.
+- **Japanese-first mode**: the upstream behaviour (text replaced with Japanese), with the English term kept as a small label.
+- **English-only mode**: GitHub unchanged; the page guide and body translation button remain available.
+- **Concept tooltips** on hover or keyboard focus, e.g. what a Fork, a Pull request or Actions actually is.
+- **Page guide**: a small panel naming the current page (Issues, Actions, Settings, …) with a one-line explanation.
+- **Body translation on request**: "本文を日本語で読む" uses Chrome's built-in Translator API (on device) and places each translation below its paragraph. Code blocks are never sent; inline code stays code. Unsupported browsers show the button as unsupported.
+- Never touched: code, diffs, file/directory/repository/user/branch names, tags, commit hashes, URLs, and user-written bodies unless you ask.
 
-## Documentation
+## Install (unpacked)
 
-- [Translation scope](docs/translation-scope.md) ([Japanese](docs/translation-scope.ja.md))
+1. Unzip `github-ja-assist-v0.2.0.zip`, or build it (below).
+2. Open `chrome://extensions`, enable **Developer mode**.
+3. **Load unpacked** → select the folder containing `manifest.json`.
+4. Reload any open GitHub tab.
 
-## Limitations
+## Privacy
 
-- Japanese, Simplified Chinese, Spanish, German, Brazilian Portuguese, Korean, French, and Russian are currently supported. Additional languages are planned as coverage expands.
-- Dynamic text containing numbers or dates, such as "3 commits" or "opened 2 days ago", is not translated. User-created content such as user names is also excluded. See [Translation scope](docs/translation-scope.md) for details.
-- Only `github.com` is supported. GitHub Enterprise and other custom domains are not supported.
-- Tested on Chrome, Edge, and Firefox. Other Chromium-based browsers should also work but have not been explicitly tested.
+No data collection, no telemetry, no network calls. Only the `storage` permission; the content scripts run on `https://github.com/*` only. Body translation runs on-device through Chrome; on first use Chrome may download a language model. See [PRIVACY.md](PRIVACY.md).
 
-## Installation
+## Browser support
 
-### Chrome
+| Browser | UI help | Body translation | Verified |
+|---|---|---|---|
+| Chrome 138+ desktop | yes | yes (Translator API) | UI help: automated tests in Chrome for Testing 153. **Real translation not verified** — see limitations |
+| Microsoft Edge | yes | shown as unsupported where en→ja is unavailable | automated test on Edge 148 |
+| Firefox | inherited manifest settings | expected: unsupported | **not tested** |
 
-Install [GitHub UI Translator from the Chrome Web Store](https://chromewebstore.google.com/detail/github-ui-translator/igdplojdbbpfbedgoaokfcagpkofmngk).
+## Known limitations
 
-If the Chrome Web Store is unavailable in your environment, such as on a company-managed device:
+- Only exact-match fixed UI strings from the dictionary are annotated; strings with numbers ("3 commits") and user-created text are not.
+- GitHub DOM changes can make labels disappear, or rarely attach to user content (the same structural limit as upstream).
+- Automated tests run logged out on public pages. Logged-in-only screens (e.g. repository Settings) are covered by the fixture page only.
+- **Actual on-device translation was not observed in this environment**: Chrome for Testing is not served translation models, and Edge 148 reports en→ja as unavailable. The DOM insertion is tested with a fake translator; cancel and unsupported paths are tested in real browsers. A manual check in branded Chrome 138+ is still owed.
+- Translation is English→Japanese only; links are not clickable inside translations.
+- Tooltips are visual aids and are not announced by screen readers.
+- On narrow screens the page guide can overlap bottom content; close it or turn it off.
 
-1. Download the `.zip` file from the [latest release](https://github.com/nobuo-miura/github-ui-translator/releases/latest) and extract it.
-2. Open `chrome://extensions` in Chrome and turn on Developer mode.
-3. Click "Load unpacked" and select the extracted folder.
+## Development
 
-Extensions installed manually do not update automatically. Repeat these steps when a new version is released. Your organization may also block Developer mode or manually installed extensions; in that case, contact your administrator.
-
-### Edge
-
-Install [GitHub UI Translator from Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/fgjocjmjjghflobobinafkbkeildanoj).
-
-### Firefox
-
-Firefox 142 or later is required.
-
-Install [GitHub UI Translator from Firefox Add-ons](https://addons.mozilla.org/firefox/addon/github-ui-translator/).
-
-After installation, open a GitHub page such as `https://github.com/...` and supported UI text will be translated automatically.
-
-### Development install (load from the repository)
-
-To customize the dictionary or contribute, clone the repository and load it directly.
-
-```sh
-git clone https://github.com/nobuo-miura/github-ui-translator.git
+```bash
+npm install && npx playwright install chromium
+npm run validate     # dictionaries, glossary, locales
+npm test             # fixture tests: the real extension on GitHub-like pages, all non-github.com requests blocked
+npm run test:live    # real github.com, public pages, logged out, read-only
+npm run build        # dist/github-ja-assist + zip
 ```
 
-- **Chrome / Edge**: open `chrome://extensions` in Chrome or `edge://extensions` in Edge, turn on Developer mode, click "Load unpacked", and select the cloned folder (the one that contains `manifest.json`).
-- **Firefox**: open `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on…", and select `manifest.json` inside the repository. A temporary add-on is removed when Firefox restarts, so it needs to be reloaded each session.
+To test the packaged build: `GHJA_EXTENSION_DIR=dist/github-ja-assist npm test`.
 
-## Usage
+Design decisions, the prior-art survey and the fork rationale: [DESIGN.md](DESIGN.md).
 
-- Click the extension icon in the toolbar to open the on/off toggle and the language selector. Japanese, Simplified Chinese, Spanish, German, Brazilian Portuguese, Korean, French, and Russian are bundled today; the dropdown is ready for additional languages once more dictionaries are added.
-- Changing the toggle or the language reloads open GitHub tabs so the new setting takes effect.
-- The popup also lets you select whether to translate the global header and has a link to this repository. Changing this option reloads open GitHub tabs. Global header translation is on by default and waits for GitHub's React hydration to finish before translating; turn it off if the global search ever fails to open.
-- Open the extension options page (`chrome://extensions` on Chrome, `edge://extensions` on Edge, or `about:addons` on Firefox) to view the bundled dictionary information and extension version.
+## License and credits
 
-## Customizing the Dictionary
-
-You can add or change translations by editing the dictionary file for the language you want to change directly (e.g. `dictionaries/ja.json`, `dictionaries/zh-CN.json`, `dictionaries/es.json`, `dictionaries/de.json`, `dictionaries/pt-BR.json`, `dictionaries/ko.json`, `dictionaries/fr.json`, `dictionaries/ru.json`).
-Entries are grouped into sections by GitHub screen (repository navigation, repository Settings, organization Settings, etc.), each preceded by a `// ====` comment line, so you can tell at a glance which screen an entry belongs to and quickly spot when GitHub's UI text changes.
-
-```jsonc
-{
-  "language": "ja",
-  "name": "日本語",
-  "translations": {
-    // ==== Repository navigation ====
-    "Code": "コード",
-    "Issues": "イシュー"
-  }
-}
-```
-
-- The file is JSON with `//` line comments (JSONC-style). Only whole-line comments are supported — trailing comments after a value on the same line are not. The extension strips comment lines before parsing, since standard `JSON.parse`/`fetch().json()` do not support comments.
-- Dictionary keys must match the original English text exactly. Leading and trailing whitespace is ignored for both visible text and supported attribute values. For visible text only, consecutive whitespace—including line breaks—is collapsed to a single space. Attribute values such as `aria-label`, `placeholder`, button `value`, and `data-disable-with` retain their internal whitespace when matched. Dictionary keys themselves must not contain leading or trailing whitespace.
-- After editing the dictionary, reload the extension (`chrome://extensions` on Chrome, `edge://extensions` on Edge, or `about:debugging` on Firefox).
-
-### Adding a new language
-
-1. Add `dictionaries/<code>.json` (e.g. `dictionaries/en.json`) in the same format.
-2. Add `{ "code": "<code>", "name": "<display name>" }` to `languages.json`. The popup and options page both load this shared list.
-3. Run `node scripts/validate.mjs` to check the dictionary format, duplicate keys, metadata, key parity with the other bundled dictionaries, self-mappings, translation chains, and non-converging cycles.
-
-The popup, options page, and extension metadata use the browser extension `_locales` mechanism independently of the GitHub translation dictionaries. To add a new language for the extension's own UI, also add `_locales/<code>/messages.json` with the same message keys as `_locales/en/messages.json`.
-
-## Project Structure
-
-```text
-github-ui-translator/
-├─ manifest.json
-├─ shared.js        # Shared language list and extension UI localization helpers
-├─ languages.json   # Bundled GitHub translation languages
-├─ content.js       # Translation engine that scans the DOM using an allowlist
-├─ popup.html/js    # Toolbar popup with the translation toggle
-├─ options.html/js  # Dictionary information and version display
-├─ _locales/        # Localized popup, options, and extension metadata messages
-├─ dictionaries/
-│  ├─ ja.json       # Japanese dictionary
-│  ├─ zh-CN.json    # Simplified Chinese dictionary
-│  ├─ es.json       # Spanish dictionary
-│  ├─ de.json       # German dictionary
-│  ├─ pt-BR.json    # Brazilian Portuguese dictionary
-│  ├─ ko.json       # Korean dictionary
-│  ├─ fr.json       # French dictionary
-│  └─ ru.json       # Russian dictionary
-├─ docs/
-│  ├─ translation-scope.md     # English version
-│  └─ translation-scope.ja.md  # Japanese version
-├─ scripts/
-│  └─ validate.mjs  # Dictionary and localization validation
-└─ icons/
-```
-
-## License
-
-[MIT License](./LICENSE)
+[MIT](LICENSE). Forked from [nobuo-miura/github-ui-translator](https://github.com/nobuo-miura/github-ui-translator) 0.1.10 (MIT, © 2026 Nobuo Miura), whose translation engine and UI dictionaries this extension uses. The learning mode, glossary (`dictionaries/glossary.ja.json`), tooltips, page guide and body translation were added in this fork.

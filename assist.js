@@ -26,6 +26,7 @@
     [/^\/notifications(\/|$)/, 'notifications'],
     [/^\/settings(\/|$)/, 'user-settings'],
     [/^\/new$/, 'new-repo'],
+    [/^\/(orgs|users)\/[^/]+\/projects(\/|$)/, 'projects'],
     [/^\/orgs\/[^/]+(\/|$)/, 'org']
   ];
   // リポジトリ内のパス（/owner/repo より後ろ）
@@ -63,6 +64,8 @@
   const BODY_PAGES = new Set(['code', 'file', 'issue', 'pull', 'releases', 'discussions', 'wiki', 'profile', 'org']);
 
   function detectPage() {
+    // 存在しないページ（404）には説明を出さない
+    if (document.title.startsWith('Page not found')) return null;
     const path = location.pathname.replace(/\/+$/, '') || '/';
     if (path === '/') return document.body?.classList.contains('logged-in') ? 'dashboard' : null;
     for (const [pattern, key] of SITE_PAGES) if (pattern.test(path)) return key;

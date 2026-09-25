@@ -5,7 +5,10 @@ import { chromium } from 'playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const EXTENSION_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// ソース・テスト用ファイルの場所
+export const REPO_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// 読み込む拡張。GHJA_EXTENSION_DIR=dist/github-ja-assist を指定すると配布用ビルドそのものを試験する
+export const EXTENSION_DIR = path.resolve(REPO_DIR, process.env.GHJA_EXTENSION_DIR || '.');
 
 export async function launch({ extension = true, colorScheme = 'light', viewport = { width: 1280, height: 900 }, headless = true } = {}) {
   const args = extension ? [`--disable-extensions-except=${EXTENSION_DIR}`, `--load-extension=${EXTENSION_DIR}`] : [];

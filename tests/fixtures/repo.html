@@ -43,6 +43,11 @@
     <a href="/octo/demo/settings"><span data-content="Settings">Settings</span></a>
   </nav>
 
+  <nav aria-label="Pull request tabs" id="pr-tabs">
+    <a href="/octo/demo/pull/2">Conversation <span class="Counter">4</span></a>
+    <a href="/octo/demo/pull/2/files">Files changed <span class="Counter">3</span></a>
+  </nav>
+
   <!-- ここから下はユーザーが作った内容。辞書のキーと同じ文字列をわざと使っている -->
   <div id="user-content">
     <nav aria-label="Wiki pages"><a href="/octo/demo/wiki/Settings">Settings</a> <a href="/octo/demo/wiki">Home</a></nav>
@@ -54,6 +59,7 @@
     <p>Owner: <a data-hovercard-type="user" href="/Settings">Settings</a>, repo: <a data-hovercard-type="repository" href="/octo/Wiki">Wiki</a></p>
     <button type="button" aria-label="Fork branch" id="branch-button"><span>Fork</span></button>
     <a href="/octo/demo/commit/0a1b2c3d4e5f" id="commit-link">Merge pull request</a>
+    <nav><a href="/octo/demo/pull/5" id="pr-title-link">Files changed</a></nav>
     <h1 class="gh-header-title"><bdi class="markdown-title">Pull requests</bdi></h1>
     <table class="diff-table" id="diff"><tr><td class="blob-code"><span class="blob-code-inner">+ Settings</span></td></tr><tr><td class="blob-code"><code>- Fork</code></td></tr></table>
     <pre id="code-block"><code>git clone https://github.com/octo/demo.git

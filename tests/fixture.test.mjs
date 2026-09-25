@@ -6,10 +6,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { launch, setSettings, EXTENSION_DIR } from './browser.mjs';
+import { launch, setSettings, EXTENSION_DIR, REPO_DIR } from './browser.mjs';
 
-const TEMPLATE = fs.readFileSync(path.join(EXTENSION_DIR, 'tests/fixtures/repo.html'), 'utf8');
-const glossary = JSON.parse(fs.readFileSync(path.join(EXTENSION_DIR, 'dictionaries/glossary.ja.json'), 'utf8'));
+const TEMPLATE = fs.readFileSync(path.join(REPO_DIR, 'tests/fixtures/repo.html'), 'utf8');
+const glossary = JSON.parse(fs.readFileSync(path.join(REPO_DIR, 'dictionaries/glossary.ja.json'), 'utf8'));
 const BASE = 'https://github.com';
 
 // GitHub が meta[name="analytics-location"] に入れる値を、パスから作る
@@ -102,6 +102,11 @@ describe('learning mode (default)', () => {
     // 画面に描かれている ::after の中身が注釈そのもの
     const rendered = await page.$eval('#repo-nav span[data-content="Pull requests"]', (el) => getComputedStyle(el, '::after').content);
     assert.match(rendered, /変更の取り込み依頼/);
+  });
+
+  test('annotates the fixed Pull request tabs, but not a PR title with the same words', async () => {
+    assert.deepEqual(await page.$$eval('#pr-tabs [data-ghja-src]', (els) => els.map((el) => el.getAttribute('data-ghja-src'))), ['Conversation', 'Files changed']);
+    assert.equal(await page.$eval('#pr-title-link', (el) => el.hasAttribute('data-ghja-src')), false);
   });
 
   test('annotates the Fork and Watch buttons', async () => {
@@ -344,6 +349,7 @@ describe('page guide', () => {
     ['/octo/demo/pulse', 'insights'],
     ['/octo/demo/settings', 'settings'],
     ['/octo/demo/commits/main', 'commits'],
+    ['/orgs/acme/projects/7', 'projects'],
     ['/octo', 'profile'],
     ['/acme', 'org'],
     ['/search?q=test', 'search']
@@ -441,7 +447,8 @@ describe('popup settings', () => {
     try {
       const page = await context.newPage();
       await page.goto(`chrome-extension://${extensionId}/popup.html`);
-      await page.waitForTimeout(300);
+      // ポップアップは言語一覧を読み込んでから設定を反映する。反映を待つ
+      await page.waitForFunction(() => document.querySelector('input[name="mode"]:checked'));
       assert.equal(await page.isChecked('input[name="mode"][value="learn"]'), true);
       for (const id of ['#toggle', '#tooltips-toggle', '#page-guide-toggle', '#content-translation-toggle']) {
         assert.equal(await page.isChecked(id), true, id);

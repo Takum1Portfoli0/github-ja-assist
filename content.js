@@ -28,6 +28,8 @@
   const annotationOwner = new WeakMap();
   // GitHub側がすでに ::after を使っている要素。上書きすると見た目を壊すので注釈しない
   const pseudoBlocked = new WeakSet();
+  // 固定の項目しか並ばないタブ列（isUserContentLink を参照）
+  const FIXED_TAB_NAV = 'nav[aria-label="Repository"], nav[aria-label="Pull request tabs"], nav[aria-label="Pull request navigation"]';
 
   const BASE_SELECTOR = [
     'nav',
@@ -470,6 +472,10 @@
   function isUserContentLink(el) {
     const link = el.closest('a[href]');
     if (!link) return false;
+    // リポジトリのタブ（Code/Issues/…/Wiki）とPull requestのタブ（Conversation/Commits/
+    // Checks/Files changed）は固定UI。リンク先が /wiki や /pull/N でも、ユーザーが名前を
+    // 付けたページやタイトルではない（GitHub 日本語アシストで追加）
+    if (link.closest(FIXED_TAB_NAV)) return false;
 
     let path;
     try {
@@ -508,9 +514,7 @@
       // Homeページ自体へのリンクは末尾にページ名が付かず/wikiのみになるため、
       // ページ名部分を省略可能にする。"_new"は新規ページ作成への固定リンクで
       // ページ名ではないため除外する
-      // ただしリポジトリのタブ（Code/Issues/…/Wiki）の「Wiki」は固定UIなので除外しない
-      // （GitHub 日本語アシストで追加。タブ列にはユーザーが名前を付けられる項目がない）
-      (/^\/[^/]+\/[^/]+\/wiki(\/(?!_new$)[^/]+)?$/.test(path) && !link.closest('nav[aria-label="Repository"]')) ||
+      /^\/[^/]+\/[^/]+\/wiki(\/(?!_new$)[^/]+)?$/.test(path) ||
       // ファイル・ディレクトリ一覧の各行へのリンク（/tree/ブランチ/パス、/blob/ブランチ/パス）。
       // ファイル名・フォルダ名はユーザーが付けたものであり、"Code"や"Packages"の
       // ように辞書キーと偶然完全一致することがある。これらの行はGitHub側で
@@ -714,7 +718,8 @@
   function translateElement(el, dict) {
     const label = el.getAttribute('aria-label');
     // 学習モードではaria-label・placeholder・ボタンのvalueを書き換えない（原文の英語のまま）
-    if (label && displayMode === 'ja') {
+    // タブ列の aria-label（"Repository" 等）は固定タブの目印に使うので、日本語優先モードでも変えない
+    if (label && displayMode === 'ja' && !el.matches(FIXED_TAB_NAV)) {
       const trimmed = label.trim();
       const targetMatch = el.closest('.js-release-target-wrapper') && trimmed.match(/^Target:\s+(.+)$/);
       const translated = dict[trimmed] || (targetMatch && dict['Target:'] && `${dict['Target:']} ${targetMatch[1]}`);

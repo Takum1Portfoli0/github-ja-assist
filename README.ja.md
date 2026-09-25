@@ -1,148 +1,113 @@
-# GitHub UI Translator
+# GitHub 日本語アシスト（開発版）
 
-[English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko.md) | [Français](README.fr.md) | [Русский](README.ru.md)
+[English](README.md) | [日本語](README.ja.md)
 
-[![Latest Release](https://img.shields.io/github/v/release/nobuo-miura/github-ui-translator?label=Latest%20Release)](https://github.com/nobuo-miura/github-ui-translator/releases/latest)
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/igdplojdbbpfbedgoaokfcagpkofmngk?label=Chrome%20Web%20Store&logo=googlechrome)](https://chromewebstore.google.com/detail/github-ui-translator/igdplojdbbpfbedgoaokfcagpkofmngk)
-[![Microsoft Edge Add-ons](https://img.shields.io/badge/dynamic/json?label=Microsoft%20Edge%20Add-ons&logo=microsoftedge&query=%24.version&prefix=v&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Ffgjocjmjjghflobobinafkbkeildanoj)](https://microsoftedge.microsoft.com/addons/detail/fgjocjmjjghflobobinafkbkeildanoj)
-[![Firefox Add-ons](https://img.shields.io/amo/v/github-ui-translator?label=Firefox%20Add-ons&logo=firefoxbrowser)](https://addons.mozilla.org/firefox/addon/github-ui-translator/)
-[![Validation](https://github.com/nobuo-miura/github-ui-translator/actions/workflows/validate.yml/badge.svg)](https://github.com/nobuo-miura/github-ui-translator/actions/workflows/validate.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+GitHub の英語の画面を、**英語の用語はそのまま残して**、小さな日本語と用語の説明で読みやすくする Chrome 拡張機能です。
+「Pull requests」「Fork」「Commit」のような GitHub・Git の用語を英語のまま覚えながら、それが何を意味するのかを日本語で確かめられます。
 
-GitHubの英語UIを、ローカル辞書を使って日本語・簡体字中国語・スペイン語・ドイツ語・ブラジルポルトガル語・韓国語・フランス語・ロシア語に翻訳するブラウザ拡張機能です（Chrome / Edge / Firefox対応）。
-外部の翻訳APIやクラウドサービスには一切依存せず、すべてブラウザ内で完結します。
+![英語のラベルの下や横に小さな日本語が付いたリポジトリ画面](docs/images/learn-light.png)
 
-![日本語翻訳結果](docs/images/jp.jpeg)
+## できること
 
-<details>
-<summary>スクリーンショット（対応8言語）</summary>
+| | |
+|---|---|
+| **小さな日本語** | 英語ラベルの横（タブは下）に、意味の分かる短い日本語を添えます。例: `Pull requests` → 変更の取り込み依頼、`Fork` → 自分側へ複製 |
+| **用語の説明** | 点線の付いた日本語にマウスを乗せる（または Tab キーで移動する）と、その機能が何なのかを説明します |
+| **ページガイド** | 画面左下に「今いるページが何をする場所か」を小さく表示します。クリックすると説明が開きます |
+| **本文の翻訳（任意）** | README・Issue・Pull request の本文を、ボタンを押したときだけ端末内で日本語に訳し、原文の下に表示します |
 
-先頭は翻訳前のGitHubの英語UI、その下が各言語の翻訳結果です。
+**変えないもの**: コード、差分（diff）、ファイル名・フォルダ名、リポジトリ名、ユーザー名、ブランチ名、タグ、コミットID、URL、README などの本文（頼まれない限り）。GitHub の検索・メニュー・ダイアログ・キーボードショートカットもそのまま使えます。
 
-![対応8言語の翻訳結果](docs/images/languages.png)
+![用語の説明ツールチップ](docs/images/tooltip.png)
 
-</details>
+## 1. Chrome への導入方法
 
-## 特徴
+開発版なので Chrome ウェブストアには公開していません。次の手順で読み込みます。
 
-- 翻訳は完全ローカルで動作し、ページ内容や設定を外部サービスへ送信しない
-- README・Issue・コメント・コードブロックなど、ユーザーが作成したコンテンツ領域を避けつつ、ナビゲーションやボタンなどの固定UI文言のみを翻訳するよう設計
-- 翻訳のON/OFFをワンクリックで切り替え可能
-- グローバルヘッダーはGitHubのReact hydration完了を待ってから翻訳し、グローバル検索と競合する可能性を低減する（ポップアップでOFFにも切り替え可能）
+1. 配布された `github-ja-assist-v0.2.0.zip` を展開します（または下の「開発者向け」の手順で `dist/github-ja-assist` を作ります）。
+2. Chrome のアドレスバーに `chrome://extensions` と入力して開きます。
+3. 右上の **デベロッパーモード** を ON にします。
+4. **パッケージ化されていない拡張機能を読み込む** を押し、展開したフォルダ（`manifest.json` が入っているフォルダ）を選びます。
+5. ツールバーのパズルのアイコンから「GitHub 日本語アシスト」を **ピン留め** しておくと、設定をすぐ開けます。
+6. GitHub のページを開く（開いていたページは再読み込みする）と、日本語が表示されます。
 
-## ドキュメント
+新しい版に入れ替えるときは、フォルダを置き換えてから `chrome://extensions` でこの拡張機能の更新ボタン（↻）を押し、GitHub のタブを再読み込みしてください。手動で読み込んだ拡張機能は自動では更新されません。
 
-- [翻訳対象の範囲](docs/translation-scope.ja.md)（[English](docs/translation-scope.md)）
+## 2. ON/OFF
 
-## 制限事項
+ツールバーのアイコンを押すと設定が開きます。いちばん上の **日本語アシスト** のスイッチで、拡張機能全体の ON/OFF を切り替えます。切り替えると、開いている GitHub のタブが自動で再読み込みされます。
 
-- 現在対応している言語は日本語・簡体字中国語・スペイン語・ドイツ語・ブラジルポルトガル語・韓国語・フランス語・ロシア語です。今後も対応範囲が整い次第、ほかの言語を追加する予定です
-- "3 commits" や "opened 2 days ago" のような、数値・日付を含む動的な文言は翻訳されません。ユーザー名などのユーザー作成コンテンツも対象外です。詳しくは[翻訳対象の範囲](docs/translation-scope.ja.md)を参照してください
-- `github.com` 以外のドメイン（GitHub Enterprise等）には対応していません
-- Chrome・Edge・Firefoxで動作確認済みです。その他のChromium系ブラウザも動くと思われますが、明示的な検証はしていません
+## 3. 表示モード
 
-## インストール方法
+| モード | 見え方 | こんな人に |
+|---|---|---|
+| **英語＋小さな日本語（おすすめ・既定）** | `Pull requests` の下に「変更の取り込み依頼」 | 英語の用語を覚えながら使いたい |
+| **日本語を主に、英語を小さく** | 「変更の取り込み依頼」の下に `Pull requests` | まず日本語で意味をつかみたい |
+| **英語のみ（GitHub 標準）** | GitHub そのまま（ページガイドと本文翻訳ボタンは使えます） | 補助なしで使いたい |
 
-### Chrome
+- 「英語＋小さな日本語」では、GitHub の文字や読み上げ用の情報（`aria-label` など）を一切書き換えません。スクリーンリーダーは元の英語のまま読み上げます。
+- 「日本語を主に」は元にした拡張機能（GitHub UI Translator）と同じ置き換え方式で、読み上げ用の情報も日本語になります。
+- 次の 3 つは個別に ON/OFF でき、切り替えはすぐ反映されます（再読み込みなし）: **用語の説明**、**ページガイド**、**本文翻訳ボタン**。
+- ページガイドは × で閉じると、そのタブでは表示されなくなります。完全に消したいときは設定で OFF にしてください。
 
-[Chrome ウェブストア](https://chromewebstore.google.com/detail/github-ui-translator/igdplojdbbpfbedgoaokfcagpkofmngk)からインストールしてください。
+## 4. 本文の翻訳
 
-社内端末など、Chrome ウェブストアを利用できない環境では、以下の手順で手動インストールできます。
+README・Issue・Pull request の画面では、ページガイドの横に **本文を日本語で読む** ボタンが出ます。
 
-1. [最新リリース](https://github.com/nobuo-miura/github-ui-translator/releases/latest)から `.zip` ファイルをダウンロードして展開する
-2. Chromeで `chrome://extensions` を開き、右上の「デベロッパーモード」をONにする
-3. 「パッケージ化されていない拡張機能を読み込む」をクリックし、展開したフォルダを選択する
+- 押したときだけ翻訳します。自動では翻訳しません。
+- 翻訳には Chrome に内蔵された翻訳機能（Translator API）を使い、**この端末の中で**処理します。本文を外部のサーバーへ送ることはありません。
+- 初めて使うときは、Chrome が翻訳用のデータ（言語パック）をダウンロードするので少し時間がかかります。進み具合はボタンの下に表示されます。
+- 訳は原文の各段落の下に、左に線の付いた薄い文字で表示します。原文はそのまま残ります。
+- コードブロックは翻訳しません。文中のコード（`npm install` など）は訳の中でもコードのまま残るようにしています。
+- もう一度押す（「訳を消す」）と訳が消えます。翻訳中に押すと中止します。
+- 翻訳機能が使えないブラウザでは、ボタンが **本文翻訳: 非対応** と表示され、押すと理由が表示されます。
 
-手動でインストールした拡張機能は自動更新されません。新しいバージョンが公開されたら、同じ手順で入れ替えてください。組織のポリシーによってデベロッパーモードや手動インストールも禁止されている場合は、管理者に確認してください。
+## 5. プライバシー
 
-### Edge
+- 集めるデータ・送るデータはありません。GitHub のパスワードやトークンにも触れません。
+- 画面の日本語と説明は、拡張機能に同梱した辞書だけで表示しています。
+- 本文翻訳は端末内で行います（Chrome が翻訳モデルを最初に取得することはあります）。
+- 必要な権限は `storage`（設定の保存）だけで、動くのは `https://github.com/` の上だけです。
 
-[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/fgjocjmjjghflobobinafkbkeildanoj)からインストールしてください。
+詳しくは [PRIVACY.ja.md](PRIVACY.ja.md) を見てください。
 
-### Firefox
+## 6. 対応ブラウザ
 
-Firefox 142以降が必要です。
+| ブラウザ | 画面の日本語・説明・ページガイド | 本文の翻訳 | 確認状況 |
+|---|---|---|---|
+| Chrome 138 以降（デスクトップ） | ○ | ○（Translator API） | 画面部分は自動テストで確認（Chrome for Testing 153）。**本文の実翻訳は未確認**（下の「既知の制限」） |
+| Chrome 137 以前 | ○ | 非対応と表示 | 未確認 |
+| Microsoft Edge | ○ | この PC の Edge 148 では英語→日本語が使えず「非対応」と表示 | Edge 148 で自動テスト |
+| Firefox | 設定ファイル上は元の拡張機能を引き継いでいるが | 非対応と表示されるはず | **未確認** |
 
-[Firefox Add-ons](https://addons.mozilla.org/firefox/addon/github-ui-translator/)からインストールしてください。
+## 7. 既知の制限
 
-インストール後、GitHubのページ（`https://github.com/...`）を開くと、対応するUI文言が選択中の言語へ自動的に翻訳されます。
+- **辞書にある固定の文言だけ**が対象です。「3 commits」のように数字を含む文言、ユーザーが作った文字は対象外です。
+- GitHub が画面の作りを変えると、日本語が付かなくなったり、まれにユーザーが作った文字に付いたりすることがあります（元にした拡張機能と同じ仕組み上の制約）。
+- 自動テストは **ログインしていない状態の公開ページ** で行っています。ログイン後だけに出る画面（リポジトリの Settings など）は、GitHub を模したテスト用ページでのみ確認しています。
+- **本文の実際の翻訳は、この開発環境では確認できていません。** テストに使う Chrome for Testing には翻訳モデルが配信されず、Edge 148 では英語→日本語が「利用不可」でした。翻訳結果を差し込む処理は模擬の翻訳器で、中止と非対応の表示は実ブラウザで確かめています。通常の Chrome 138 以降での確認は人の手で行う必要があります。
+- 本文翻訳は英語→日本語だけです。英語以外の本文は訳しません（日本語・中国語・韓国語が主の段落は飛ばします）。訳の中ではリンクは押せません（原文のリンクを使ってください）。
+- 用語の説明ツールチップは見た目の補助で、スクリーンリーダーには読み上げられません。
+- 狭い画面では、左下のページガイドが画面下端の内容に重なることがあります。× で閉じるか、設定で OFF にしてください。
+- `github.com` 以外（GitHub Enterprise など）では動きません。
 
-### 開発用（リポジトリから直接読み込む）
+## 開発者向け
 
-辞書のカスタマイズや開発に参加する場合は、リポジトリをクローンして読み込みます。
-
-```
-git clone https://github.com/nobuo-miura/github-ui-translator.git
-```
-
-- **Chrome / Edge**: Chromeでは`chrome://extensions`、Edgeでは`edge://extensions`を開く →「デベロッパーモード」ON →「パッケージ化されていない拡張機能を読み込む」でクローンしたフォルダ（`manifest.json`があるフォルダ）を選択
-- **Firefox**: `about:debugging#/runtime/this-firefox` →「一時的なアドオンを読み込む…」でリポジトリ内の `manifest.json` を選択（一時的なアドオンはFirefoxを再起動すると消えるため、セッションごとに読み込み直す必要があります）
-
-## 使い方
-
-- ツールバーの拡張機能アイコンをクリックすると、翻訳のON/OFFトグル、言語選択、グローバルヘッダー翻訳の設定が表示される（現時点では日本語・簡体字中国語・スペイン語・ドイツ語・ブラジルポルトガル語・韓国語・フランス語・ロシア語に対応）
-- グローバルヘッダー翻訳は既定でON。GitHubのReact hydration完了後にのみ翻訳するため通常はグローバル検索と競合しないが、万一検索画面が開かない場合はOFFにできる
-- トグル、言語、グローバルヘッダー翻訳の設定を変更すると、開いているGitHubのタブが自動的に再読み込みされ、設定が反映される
-- Popup下部にはこのリポジトリへのリンクがある
-- 拡張機能のオプション画面（Chromeは`chrome://extensions`、Edgeは`edge://extensions`の詳細から、Firefoxは`about:addons`から開く）で、同梱している辞書の情報とバージョンを確認できる
-
-## 辞書のカスタマイズ
-
-変更したい言語の辞書ファイル（例: `dictionaries/ja.json`、`dictionaries/zh-CN.json`、`dictionaries/es.json`、`dictionaries/de.json`、`dictionaries/pt-BR.json`、`dictionaries/ko.json`、`dictionaries/fr.json`、`dictionaries/ru.json`）を直接編集することで、翻訳される文言を追加・変更できます。
-エントリはGitHubの画面（リポジトリナビゲーション、リポジトリSettings、Organization Settingsなど）ごとにセクション分けされており、各セクションの先頭に `// ====` というコメント行を入れています。どの文言がどの画面のものか一目で分かり、GitHub側のUI変更にも気付きやすくなっています。
-
-```jsonc
-{
-  "language": "ja",
-  "name": "日本語",
-  "translations": {
-    // ==== リポジトリナビゲーション ====
-    "Code": "コード",
-    "Issues": "イシュー"
-  }
-}
-```
-
-- このファイルは`//`行コメント付きのJSON（JSONC形式）です。行全体がコメントである場合のみ対応しており、値の後ろに続けて書くコメントには対応していません。標準の`JSON.parse`/`fetch().json()`はコメントを解釈できないため、拡張機能側でコメント行を除去してから読み込んでいます
-- キーは英語の原文と**完全一致**している必要があります。表示テキストと対応する属性値は、どちらも前後の空白を無視して照合します。表示テキストに限り、改行を含む連続空白を単一スペースに正規化します。`aria-label`・`placeholder`・ボタンの`value`・`data-disable-with`などの属性値は、内部の空白を維持したまま照合します。辞書のキー自体に前後の空白を含めることはできません
-- 編集後は拡張機能を再読み込みしてください（Chromeは`chrome://extensions`、Edgeは`edge://extensions`、Firefoxは`about:debugging`から）
-
-### 新しい言語を追加する場合
-
-1. 同じ形式で`dictionaries/<言語コード>.json`（例: `dictionaries/en.json`）を追加する
-2. `languages.json`に`{ "code": "<言語コード>", "name": "<表示名>" }`を追加する。Popupとオプション画面はこの共通一覧を読み込む
-3. `node scripts/validate.mjs`を実行し、辞書形式、重複キー、メタデータ、同梱辞書間のキー一致、自己マッピング、翻訳連鎖、収束しないサイクルを確認する
-
-Popup、オプション画面、拡張機能の名前・説明は、GitHub翻訳用辞書とは別にブラウザ拡張標準の`_locales`で多言語化しています。拡張機能自身のUIにも新しい言語を追加する場合は、`_locales/en/messages.json`と同じメッセージキーを持つ`_locales/<言語コード>/messages.json`も追加してください。
-
-## ディレクトリ構成
-
-```
-github-ui-translator/
-├─ manifest.json
-├─ shared.js        … 言語一覧・拡張機能UIローカライズの共通処理
-├─ languages.json   … 同梱するGitHub翻訳言語の一覧
-├─ content.js       … 翻訳エンジン本体（許可リスト方式でDOMを走査）
-├─ popup.html/js    … ツールバーのON/OFFトグル
-├─ options.html/js  … 辞書情報・バージョン表示
-├─ _locales/        … Popup・設定・拡張機能メタデータの翻訳
-├─ dictionaries/
-│  ├─ ja.json       … 日本語辞書
-│  ├─ zh-CN.json    … 簡体字中国語辞書
-│  ├─ es.json       … スペイン語辞書
-│  ├─ de.json       … ドイツ語辞書
-│  ├─ pt-BR.json    … ブラジルポルトガル語辞書
-│  ├─ ko.json       … 韓国語辞書
-│  ├─ fr.json       … フランス語辞書
-│  └─ ru.json       … ロシア語辞書
-├─ docs/
-│  ├─ translation-scope.md     … 英語版
-│  └─ translation-scope.ja.md  … 日本語版
-├─ scripts/
-│  └─ validate.mjs  … 辞書・ローカライズの検証
-└─ icons/
+```bash
+npm install                 # Playwright（テスト用。拡張機能の実行には不要）
+npx playwright install chromium
+npm run validate            # 辞書・グロッサリー・ロケールの検証
+npm test                    # 模擬ページでの自動テスト（外部通信は遮断して確認）
+npm run test:live           # 実際の github.com（公開ページ・未ログイン・読み取りのみ）でのテスト
+npm run build               # dist/github-ja-assist と zip を作成
 ```
 
-## ライセンス
+配布用ビルドそのものをテストするには、`GHJA_EXTENSION_DIR=dist/github-ja-assist npm test`（PowerShell では `$env:GHJA_EXTENSION_DIR='dist/github-ja-assist'; npm test`）。
 
-[MIT License](./LICENSE)
+- 設計の判断と調査結果: [DESIGN.md](DESIGN.md)
+- 用語と説明の辞書: `dictionaries/glossary.ja.json`（画面の英語と完全一致で照合。`ja` が添える日本語、`description` が説明、`aliases` が別表記）
+- 画面文言の辞書（元の拡張機能のもの）: `dictionaries/ja.json`、翻訳対象の範囲: [docs/translation-scope.ja.md](docs/translation-scope.ja.md)
+
+## ライセンスと元にした拡張機能
+
+[MIT License](LICENSE)。本拡張機能は [nobuo-miura/github-ui-translator](https://github.com/nobuo-miura/github-ui-translator)（MIT License, Copyright (c) 2026 Nobuo Miura）の 0.1.10 を元に、学習モード・用語の説明・ページガイド・本文翻訳を追加したものです。翻訳エンジンと画面文言の辞書（`dictionaries/*.json`）は元の拡張機能のものを使っています。

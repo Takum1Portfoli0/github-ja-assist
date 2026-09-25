@@ -1,45 +1,53 @@
-# Privacy Policy — GitHub UI Translator
+# Privacy Policy — GitHub Japanese Assist
 
 [English](PRIVACY.md) | [日本語](PRIVACY.ja.md)
 
-Last updated: August 31, 2026
+Last updated: September 25, 2026
 
 ## Summary
 
-**GitHub UI Translator does not collect or transmit personal or sensitive user data. It stores only the translation on/off state, selected language, and global header translation on/off state locally on your device.**
+**GitHub Japanese Assist does not collect, transmit or sell personal data, page content or credentials. It stores only its display settings, locally. When you use body translation, the translation is done on your device by Chrome's built-in translator; the extension sends nothing anywhere.**
 
 ## Details
 
 ### No data collection
 
-This extension does not collect any personal information, browsing history, page content, or usage analytics. There is no telemetry of any kind.
+The extension collects no personal data, browsing history, page content or usage data, and has no telemetry. It never accesses GitHub credentials (passwords, tokens, cookies).
 
-### No external communication for translation
+### UI help uses bundled dictionaries only
 
-All translation is performed entirely within your browser using dictionary files bundled with the extension. The extension makes no network requests to translation APIs, analytics services, or cloud services, and the content of the pages you view never leaves your browser.
+The small Japanese labels, the concept tooltips and the page guide come only from the dictionaries bundled with the extension (`dictionaries/`). There are no calls to translation APIs, analytics or cloud services.
 
-### Page content is processed locally only
+### Body translation (README / Issue / Pull request)
 
-To perform translation, the extension accesses visible GitHub UI text (such as labels, buttons, and menu items) only to translate it locally in your browser. Page content is not recorded, retained, or transmitted.
+- It runs only when you press "本文を日本語で読む" (read in Japanese). Nothing is translated automatically.
+- Translation uses Chrome's built-in Translator API and runs on your device. The extension never sends body text to an external server, including the content of private repositories.
+- On first use, Chrome itself may download a translation model (language pack) from Google's servers. That is the browser fetching a model; it contains no page content.
+- Translations are shown on the page temporarily and are never stored. They disappear when you navigate or reload.
+- In browsers without the Translator API, the button is shown as unsupported and nothing is sent.
 
-### Local settings only
+### Settings stay in your browser
 
-The extension stores three settings — the translation on/off state, the selected language, and the global header translation on/off state — using the browser's extension storage (`chrome.storage.local` / `browser.storage.local`). These settings remain on your device and are never transmitted anywhere.
+All settings are stored locally with `chrome.storage.local` and are never transmitted:
+
+- extension on/off, display mode, dictionary language, global header translation on/off
+- on/off for the tooltips, the page guide and the body-translation button
 
 ### Permissions
 
-- **storage**: Used solely to save the translation on/off state, selected language, and global header translation on/off state described above.
-- **Host access to `https://github.com/*`**: Required to run the translation script on GitHub pages. It is used only to replace UI text with translations from the bundled dictionaries and to reload GitHub tabs when you change settings.
+- **storage**: only to store the settings above.
+- **Content script on `https://github.com/*`**: needed to show the Japanese help on GitHub pages. It does not run on any other site.
+
+No other permissions are requested.
 
 ### No third parties
 
-No data is shared with, sold to, or processed by any third party, because no data ever leaves your device.
+No data leaves your device, so nothing is shared with, sold to or processed by third parties.
 
-## Changes to this policy
+## Changes
 
-If this policy ever changes (for example, if a future version adds an optional online feature), the changes will be described here and in the release notes before they take effect.
+Any change to this policy will be announced on this page before it takes effect.
 
-## Contact
+## Based on
 
-If you have any questions about this policy, please open an issue at:
-https://github.com/nobuo-miura/github-ui-translator/issues
+This extension is based on [GitHub UI Translator](https://github.com/nobuo-miura/github-ui-translator) (MIT License). This policy covers GitHub Japanese Assist.
