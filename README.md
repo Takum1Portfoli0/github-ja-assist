@@ -46,6 +46,7 @@ No data collection, no telemetry, no network calls. Only the `storage` permissio
 - To label the button as available or unsupported, the page asks the browser whether en→ja translation is available (`Translator.availability()`; no content is passed). The translator is created, and text translated, only on click.
 - Tooltips are visual aids and are not announced by screen readers. They stay open while hovered and close with Esc.
 - Closing the page guide returns keyboard focus to the page as a whole.
+- While the pointer rests on a tooltip, the first click only closes it.
 - On narrow screens the page guide can overlap bottom content; close it or turn it off.
 
 ## Development

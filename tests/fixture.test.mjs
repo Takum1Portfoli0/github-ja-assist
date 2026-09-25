@@ -372,6 +372,22 @@ describe('concept tooltips', () => {
     assert.ok((await page.evaluate(() => window.__keys)).includes('Escape'));
   });
 
+  test('does not cover a menu that GitHub has opened from the same control', async () => {
+    // 閉じているときは出る（対照）。ヘッダーの項目は横に出さないので、訳は説明にだけ出る
+    await page.mouse.move(1270, 5);
+    await page.hover('#header-flex');
+    await page.waitForTimeout(600);
+    assert.equal(await tip().isVisible(), true);
+    assert.match(await tip().textContent(), /Explore/);
+    await page.mouse.move(1270, 5);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => document.querySelector('#header-flex').setAttribute('aria-expanded', 'true'));
+    await page.hover('#header-flex');
+    await page.waitForTimeout(600);
+    assert.equal(await tip().isVisible(), false);
+    await page.evaluate(() => document.querySelector('#header-flex').removeAttribute('aria-expanded'));
+  });
+
   test('can be switched off without reloading', async () => {
     await setSettings(browser.context, browser.extensionId, { tooltips: false });
     await page.waitForTimeout(200);
@@ -485,6 +501,8 @@ describe('README / Issue / PR body translation', () => {
   test('clicking the button starts model preparation and can be cancelled', async () => {
     const button = page.locator('ghja-assist button', { hasText: /本文/ });
     assert.equal(await button.textContent(), '本文を日本語で読む');
+    // クリック前に何も始まっていない（読み込み時に自動でボタンを押す改変があれば、ここに状態が出る）
+    assert.equal(await page.locator('ghja-assist .status').isVisible(), false);
     await button.click();
     // Chrome for Testing には翻訳モデルが配信されないので create() は終わらない。中止できることを確かめる
     await page.waitForFunction(() => document.querySelector('ghja-assist').shadowRoot.querySelector('.status').textContent.includes('翻訳モデル'));
@@ -590,6 +608,10 @@ describe('source hygiene', () => {
     }
     for (const file of ['content.js', 'shared.js', 'popup.js', 'options.js', 'content-translate.js']) {
       assert.doesNotMatch(read(file), /Translator\.create\(/, file);
+    }
+    // 拡張自身がボタンを押したことにする（プログラムからのクリック）経路も無い
+    for (const file of ['content.js', 'content-translate.js', 'assist.js', 'shared.js']) {
+      assert.doesNotMatch(read(file), /\.click\(\)|dispatchEvent\(/, file);
     }
     // content-translate.js は translateBodies を定義するだけで、自分では呼ばない
     assert.equal([...read('content-translate.js').matchAll(/translateBodies\(/g)].length, 1);

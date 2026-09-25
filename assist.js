@@ -195,7 +195,8 @@
   }
 
   function showTip(target) {
-    if (!target.isConnected || githubTooltipOpen()) return;
+    // GitHub 自身のツールチップや、開いているメニュー（ヘッダーのメガメニュー等）の上には重ねない
+    if (!target.isConnected || githubTooltipOpen() || target.closest('[aria-expanded="true"]')) return;
     const src = target.getAttribute('data-ghja-src');
     const term = glossary.terms[src];
     const label = term?.ja || globalThis.GitHubUITranslator.lookup?.(src) || '';
